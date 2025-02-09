@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>注册界面</title>
+    <style>
+      /* 整体表单样式 */
+      form {
+        width: 300px;
+        margin: 0 auto;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        background-color: #f9f9f9;
+      }
+
+      /* 输入框样式 */
+      input[type="text"],
+      input[type="password"],
+      select {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 15px;
+        border: 1px solid #ccc;
+        border-radius: 3px;
+      }
+
+      /* 提交按钮样式 */
+      button[type="submit"] {
+        width: 100%;
+        padding: 10px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 3px;
+        cursor: pointer;
+      }
+
+      /* 鼠标悬停在按钮上的样式 */
+      button[type="submit"]:hover {
+        background-color: #0056b3;
+      }
+
+      /* 错误提示信息样式 */
+      #passwordError {
+        color: red;
+        margin-bottom: 10px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <form action="/auth/doregister" method="post" id="registerForm">
+      <input type="text" name="username" placeholder="用户名" required />
+      <input
+        type="password"
+        name="password"
+        id="password"
+        placeholder="密码"
+        required
+      />
+      <input
+        type="password"
+        name="password2"
+        id="password2"
+        placeholder="确认密码"
+        required
+      />
+      <select name="role" id="roleSelect">
+        <option value="1">教师</option>
+        <option value="2">学生</option>
+      </select>
+      <!-- 教室号输入框 -->
+      <input
+        type="text"
+        name="classroom"
+        id="classroomInput"
+        placeholder="教室号"
+        style="display: none"
+      />
+      <!-- 密码错误提示信息 -->
+      <div id="passwordError"></div>
+      <button type="submit">注册</button>
+    </form>
+
+    <script>
+      // 获取下拉框和教室号输入框的 DOM 元素
+      const roleSelect = document.getElementById("roleSelect");
+      const classroomInput = document.getElementById("classroomInput");
+
+      // 监听下拉框的 change 事件
+      roleSelect.addEventListener("change", function () {
+        if (this.value === "2") {
+          // 如果选择的是学生，显示教室号输入框
+          classroomInput.style.display = "block";
+        } else {
+          // 如果选择的是教师，隐藏教室号输入框
+          classroomInput.style.display = "none";
+        }
+      });
+
+      // 获取表单、密码输入框和错误提示元素
+      const registerForm = document.getElementById("registerForm");
+      const passwordInput = document.getElementById("password");
+      const confirmPasswordInput = document.getElementById("password2");
+      const passwordError = document.getElementById("passwordError");
+
+      // 监听表单的提交事件
+      registerForm.addEventListener("submit", function (e) {
+        if (passwordInput.value !== confirmPasswordInput.value) {
+          // 如果两次密码输入不一致，阻止表单提交并显示错误信息
+          e.preventDefault();
+          passwordError.textContent = "两次输入的密码不一致，请重新输入。";
+        } else {
+          // 如果两次密码输入一致，清空错误信息
+          passwordError.textContent = "";
+        }
+      });
+    </script>
+  </body>
+</html>

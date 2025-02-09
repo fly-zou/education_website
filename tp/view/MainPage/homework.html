@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale = 1.0" />
+    <title>作业展示</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+      }
+
+      .class-name {
+        font-size: 20px;
+        font-weight: bold;
+        margin-bottom: 10px;
+      }
+
+      .filter {
+        margin-bottom: 20px;
+      }
+
+      .filter label {
+        margin-right: 10px;
+      }
+
+      .assignment {
+        display: flex;
+        align-items: start;
+        margin-bottom: 15px;
+      }
+
+      .assignment-type {
+        background-color: #ccc;
+        color: white;
+        padding: 5px 10px;
+        margin-right: 10px;
+      }
+
+      .assignment-details {
+        flex: 1;
+      }
+
+      .assignment-status {
+        color: #007bff;
+        margin-right: 10px;
+      }
+
+      .analysis-link {
+        color: #007bff;
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="class-name">班级-01</div>
+    <div class="filter">
+      <label>筛选</label>
+      <input type="radio" name="filter" value="all" checked />全部
+      <input type="radio" name="filter" value="completed" />已完成
+      <input type="radio" name="filter" value="incomplete" />未完成
+    </div>
+    <div class="assignment">
+      <div class="assignment-type">作业</div>
+      <div class="assignment-details">
+        <div>实践3 蚂蚁算法</div>
+        <div class="assignment-status">已完成</div>
+        <a href="#" class="analysis-link">智能分析</a>
+      </div>
+    </div>
+    <div class="assignment">
+      <div class="assignment-type">作业</div>
+      <div class="assignment-details">
+        <div>A star 算法实践报告</div>
+        <div class="assignment-status">已完成</div>
+        <a href="#" class="analysis-link">智能分析</a>
+      </div>
+    </div>
+    <div class="assignment">
+      <div class="assignment-type">作业</div>
+      <div class="assignment-details">
+        <div>实践1-知识图谱</div>
+        <div class="assignment-status">已完成</div>
+        <a href="#" class="analysis-link">智能分析</a>
+      </div>
+    </div>
+  </body>
+</html>

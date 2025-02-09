@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale = 1.0" />
+    <title>AI助手</title>
+    <style>
+         /* 整体聊天框容器样式 */
+      .chat-container {
+             display: flex;
+             flex - direction: column;
+             max - width: 600px;
+             margin: 0 auto;
+             padding: 20px;
+             border: 1px solid #ccc;
+             border - radius: 5px;
+             box - shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+         }
+
+         /* 输入框样式 */
+      .AI_input {
+             margin - bottom: 10px;
+         }
+
+         textarea {
+             width: 100%;
+             height: 50px;
+             padding: 10px;
+             border: 1px solid #ccc;
+             border - radius: 3px;
+             font - size: 14px;
+         }
+
+         /* 发送按钮样式 */
+      .send-button {
+             width: 100px;
+             height: 30px;
+             background - color: #007BFF;
+             color: white;
+             border: none;
+             border - radius: 3px;
+             cursor: pointer;
+             font - size: 14px;
+         }
+
+         /* 聊天记录显示区域样式 */
+      .chat-history {
+             border: 1px solid #ccc;
+             border - radius: 3px;
+             padding: 10px;
+             height: 300px;
+             overflow - y: scroll;
+         }
+    </style>
+  </head>
+
+  <body>
+    <div class="chat-container">
+      <!-- 聊天记录显示区域 -->
+      <div class="chat-history"></div>
+      <div class="AI_input">
+        <textarea
+          dir="ltr"
+          rows="1"
+          autocomplete="off"
+          data-testid="chat_input_input"
+          cols="20"
+          placeholder="发消息"
+          spellcheck="false"
+          data-ms-editor="true"
+        ></textarea>
+      </div>
+      <button class="send-button">发送</button>
+    </div>
+    <script>
+      // 获取发送按钮和输入框元素
+      const sendButton = document.querySelector(".send-button");
+      const inputTextarea = document.querySelector("textarea");
+      const chatHistory = document.querySelector(".chat-history");
+
+      sendButton.addEventListener("click", function () {
+        const userMessage = inputTextarea.value;
+        if (userMessage) {
+          // 创建一个新的div来显示用户消息
+          const userMessageDiv = document.createElement("div");
+          userMessageDiv.textContent = "你: " + userMessage;
+          chatHistory.appendChild(userMessageDiv);
+          inputTextarea.value = "";
+
+          // 模拟AI回复
+          setTimeout(() => {
+            const aiMessageDiv = document.createElement("div");
+            aiMessageDiv.textContent = "AI: 这是一条模拟回复";
+            chatHistory.appendChild(aiMessageDiv);
+          }, 1000);
+        }
+      });
+    </script>
+  </body>
+</html>

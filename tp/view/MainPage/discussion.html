@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>讨论页面</title>
+    <style>
+      /* 整体布局 */
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+      }
+
+      /* 时间筛选器样式 */
+      .filter-container {
+        padding: 10px;
+        background-color: #f4f4f4;
+      }
+
+      /* 话题展示框样式 */
+      .topic-container {
+        padding: 10px;
+      }
+
+      /* 话题列表样式 */
+      .topic-list {
+        list-style-type: none;
+        padding: 0;
+      }
+
+      .topic-item {
+        border: 1px solid #ccc;
+        padding: 10px;
+        margin-bottom: 10px;
+      }
+
+      /* 分页按钮样式 */
+      .pagination {
+        margin-top: 10px;
+      }
+
+      .pagination button {
+        padding: 5px 10px;
+        margin-right: 5px;
+      }
+
+      /* 右侧选项卡样式 */
+      .tab-container {
+        position: fixed;
+        top: 10px;
+        right: 10px;
+      }
+
+      .tab {
+        display: inline-block;
+        padding: 5px 10px;
+        border: 1px solid #ccc;
+        cursor: pointer;
+      }
+
+      /* 新建话题样式 */
+      .new-topic {
+        padding: 10px;
+        background-color: #f4f4f4;
+        margin-top: 10px;
+      }
+
+      .new-topic input,
+      .new-topic textarea {
+        width: 100%;
+        padding: 5px;
+        margin-bottom: 10px;
+      }
+
+      .new-topic button {
+        padding: 5px 10px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- 时间筛选器 -->
+    <div class="filter-container">
+      <label for="date-filter">按日期筛选:</label>
+      <input type="date" id="date-filter" />
+      <button onclick="filterTopicsByDate()">筛选</button>
+    </div>
+
+    <!-- 话题展示框 -->
+    <div class="topic-container">
+      <ul class="topic-list" id="topic-list">
+        <!-- 这里通过JavaScript动态添加话题 -->
+      </ul>
+      <div class="pagination" id="pagination">
+        <button onclick="prevPage()">上一页</button>
+        <button onclick="nextPage()">下一页</button>
+      </div>
+    </div>
+
+    <!-- 右侧选项卡 -->
+    <div class="tab-container">
+      <div class="tab" onclick="showMyPublished()">我发布的</div>
+      <div class="tab" onclick="showMyDiscussed()">我讨论的</div>
+      <div class="tab" onclick="showRepliedToMe()">回复我的</div>
+    </div>
+
+    <!-- 新建话题 -->
+    <div class="new-topic">
+      <h3>新建话题</h3>
+      <input type="text" placeholder="标题" id="topic-title" />
+      <textarea placeholder="正文" id="topic-content"></textarea>
+      <button onclick="createNewTopic()">发布</button>
+    </div>
+
+    <script>
+      // 模拟话题数据
+      const topics = [
+        {
+          id: 1,
+          title: "话题1",
+          content: "内容1",
+          date: "2025-02-01",
+          author: "用户1",
+        },
+        {
+          id: 2,
+          title: "话题2",
+          content: "内容2",
+          date: "2025-02-02",
+          author: "用户2",
+        },
+        // 更多话题数据...
+      ];
+
+      let currentPage = 1;
+      const topicsPerPage = 10;
+
+      function displayTopics() {
+        const topicList = document.getElementById("topic-list");
+        topicList.innerHTML = "";
+        const startIndex = (currentPage - 1) * topicsPerPage;
+        const endIndex = startIndex + topicsPerPage;
+        const currentTopics = topics.slice(startIndex, endIndex);
+
+        currentTopics.forEach((topic) => {
+          const listItem = document.createElement("li");
+          listItem.classList.add("topic-item");
+          listItem.innerHTML = `<strong>${topic.title}</strong><br>${topic.content}<br>发布日期: ${topic.date}<br>作者: ${topic.author}`;
+          topicList.appendChild(listItem);
+        });
+      }
+
+      function prevPage() {
+        if (currentPage > 1) {
+          currentPage--;
+          displayTopics();
+        }
+      }
+
+      function nextPage() {
+        const totalPages = Math.ceil(topics.length / topicsPerPage);
+        if (currentPage < totalPages) {
+          currentPage++;
+          displayTopics();
+        }
+      }
+
+      function filterTopicsByDate() {
+        const dateFilter = document.getElementById("date-filter").value;
+        // 这里添加根据日期筛选话题的逻辑
+        // 筛选后重新显示话题
+        displayTopics();
+      }
+
+      function showMyPublished() {
+        // 这里添加显示我发布的话题的逻辑
+        // 筛选后重新显示话题
+        displayTopics();
+      }
+
+      function showMyDiscussed() {
+        // 这里添加显示我讨论的话题的逻辑
+        // 筛选后重新显示话题
+        displayTopics();
+      }
+
+      function showRepliedToMe() {
+        // 这里添加显示回复我的话题的逻辑
+        // 筛选后重新显示话题
+        displayTopics();
+      }
+
+      function createNewTopic() {
+        const title = document.getElementById("topic-title").value;
+        const content = document.getElementById("topic-content").value;
+        // 这里添加将新话题保存到数据中的逻辑
+        // 保存后重新显示话题
+        displayTopics();
+      }
+
+      // 初始显示话题
+      displayTopics();
+    </script>
+  </body>
+</html>
