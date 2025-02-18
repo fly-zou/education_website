@@ -90,8 +90,18 @@
           // 模拟AI回复
           setTimeout(() => {
             const aiMessageDiv = document.createElement("div");
-            aiMessageDiv.textContent = "AI: 这是一条模拟回复";
+            aiMessageDiv.textContent =
+              "AI: 你好，我是AI助手，你有什么问题可以问我哦！";
             chatHistory.appendChild(aiMessageDiv);
+
+            const userMessageDiv2 = document.createElement("div");
+            userMessageDiv2.textContent = "你: 你能做什么";
+            chatHistory.appendChild(userMessageDiv2);
+
+            const userMessageDiv3 = document.createElement("div");
+            userMessageDiv3.textContent =
+              "AI：作为计算机科学专业的博士后，我在高校教授数据结构课程。我的主要职责包括通过晓晓平台教授数据结构的基本概念、算法和应用，解答你在学习过程中遇到的问题，提供个性化的学习支持和指导，以及管理和组织你们的学习进度，确保你们按时完成课程任务。我还会定期评估你们的学习情况，并提供反馈和改进建议哦。如果你有任何关于数据结构的问题，随时都可以问我。";
+            chatHistory.appendChild(userMessageDiv3);
           }, 1000);
         }
       });

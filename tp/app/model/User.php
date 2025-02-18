@@ -3,6 +3,8 @@
 namespace app\model;
 
 use think\Model;
+
+class User extends Model
 {
     // 设置数据表名（如果表名不是 'user'）
     protected $table = 'users';
