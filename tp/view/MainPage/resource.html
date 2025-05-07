@@ -1,117 +1,420 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="zh-CN">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale = 1.0" />
-    <title>资源页面</title>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文件管理</title>
     <style>
-      body {
-        font-family: Arial, sans-serif;
-        margin: 20px;
-      }
+        /* 重置默认样式 */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
-      .search-box {
-        float: right;
-        border: 1px solid #ccc;
-        border-radius: 3px;
-        padding: 5px;
-      }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f8f9fa;
+            padding: 1rem;
+        }
 
-      .search-box input {
-        border: none;
-        outline: none;
-      }
+        /* 浮动上传按钮优化 */
+        .float-btn {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            background: #2196F3;
+            color: white;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1000;
+        }
 
-      .search-box button {
-        background-color: transparent;
-        border: none;
-        cursor: pointer;
-      }
+        .float-btn:hover {
+            transform: scale(1.08) rotate(90deg);
+            background: #1976D2;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+        }
 
-      .resource-header {
-        display: flex;
-        justify-content: space - between;
-        align-items: center;
-        margin-bottom: 10px;
-      }
+        /* 弹窗样式优化 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(2px);
+            z-index: 2000;
+            padding: 1rem;
+        }
 
-      .resource-table {
-        width: 100%;
-        border-collapse: collapse;
-      }
+        .modal-content {
+            position: relative;
+            background: white;
+            max-width: 480px;
+            margin: 2rem auto;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            animation: modalShow 0.3s ease-out;
+        }
 
-      .resource-table th,
-      .resource-table td {
-        border: 1px solid #ccc;
-        padding: 8px;
-        text-align: left;
-      }
+        @keyframes modalShow {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
 
-      .resource-table th {
-        background-color: #f4f4f4;
-      }
+        /* 拖放区域优化 */
+        .drop-zone {
+            border: 2px dashed #e0e0e0;
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.2s;
+            margin: 1rem 0;
+            background: #fff;
+        }
 
-      .folder {
-        background-size: 16px;
-        background-repeat: no - repeat;
-        background-position: left center;
-        padding-left: 20px;
-      }
+        .drop-zone.dragover {
+            border-color: #2196F3;
+            background-color: rgba(33,150,243,0.05);
+            transform: translateY(-2px);
+        }
 
-      .zip {
-        background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBmaWxsPSIjNjY2NjY2IiBkPSJNMTIgMTUuMDV2LTIuMjJsLTYuMzQzLTYuMzQ0TDUuMTMgMTJMMTIgMTYuODcxbDYuODYtNi44N0w2Ljk1OCA2Ljg3TDEyIDExLjkxVjkuMDVsNi4zNDMtNi4zNDQsMS40MTQgMS40MTQtNi4zNDMgNi4zNDR2Mi4yMmwtNi4zNDMgNi4zNDQsMS40MTQgMS40MTQsNi4zNDMtNi4zNDR6Ii8+PC9zdmc+");
-        background-size: 16px;
-        background-repeat: no - repeat;
-        background-position: left center;
-        padding-left: 20px;
-      }
+        /* 按钮统一风格 */
+        .upload-btn {
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin: 0.5rem;
+            font-size: 0.9rem;
+        }
 
-      .ppt {
-        background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBmaWxsPSIjNjY2NjY2IiBkPSJNMjAgOEw4IDJoMTJ2NnYtNnptLTIgNGg0djIuN2wtNC42IDMuMy00LjYtMyuzaC00VjFoNHY0eiIvPjwvc3ZnPg==");
-        background-size: 16px;
-        background-repeat: no - repeat;
-        background-position: left center;
-        padding-left: 20px;
-      }
+        .upload-btn:hover {
+            background: #1976D2;
+            transform: translateY(-1px);
+        }
 
-      .video {
-        background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBmaWxsPSIjNjY2NjY2IiBkPSJNMjAgOCA4IDJoMTJ2NnYtNnptLTIgNGg0djIuN2wtNC42IDMuMy00LjYtMyuzaC00VjFoNHY0eiIvPjwvc3ZnPg==");
-        background-size: 16px;
-        background-repeat: no - repeat;
-        background-position: left center;
-        padding-left: 20px;
-      }
+        /* 文件列表优化 */
+        #fileTable {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        #fileTable th {
+            background: #f5f5f5;
+            padding: 1rem;
+            font-weight: 600;
+            text-align: left;
+        }
+
+        #fileTable td {
+            padding: 0.75rem 1rem;
+            border-top: 1px solid #eee;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.5rem;
+            margin: 0.25rem 0;
+            background: #fff;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+
+        .file-item:hover {
+            background: #f8f9fa;
+        }
+
+        /* 操作按钮优化 */
+        .download-btn {
+            background: #4CAF50;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .download-btn:hover {
+            background: #45a049;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .remove-btn {
+            color: #ff4444;
+            cursor: pointer;
+            padding: 0.25rem;
+            transition: all 0.2s;
+        }
+
+        .remove-btn:hover {
+            color: #cc0000;
+            transform: scale(1.2);
+        }
+
+        /* 响应式优化 */
+        @media (max-width: 600px) {
+            #fileTable thead {
+                display: none;
+            }
+
+            #fileTable tr {
+                display: block;
+                margin-bottom: 1rem;
+                border: 1px solid #eee;
+                border-radius: 8px;
+            }
+
+            #fileTable td {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 0.75rem;
+                border: none;
+            }
+
+            #fileTable td::before {
+                content: attr(data-label);
+                font-weight: 600;
+                color: #666;
+                margin-right: 1rem;
+                flex: 0 0 80px;
+            }
+
+            .modal-content {
+                width: 95%;
+                margin: 1rem auto;
+            }
+        }
     </style>
-  </head>
+</head>
+<body>
+    <!-- 浮动上传按钮 -->
+    <button class="float-btn" onclick="showUploadModal()">+</button>
 
-  <body>
-    <div class="resource-header">
-      <div>全部文件</div>
-      <div>当前页共1个</div>
-      <div class="search-box">
-        <input type="text" placeholder="搜索" />
-        <button><i class="fafa-search"></i></button>
-      </div>
+    <!-- 上传弹窗 -->
+    <div id="uploadModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeUploadModal()">&times;</span>
+            <h2>上传文件</h2>
+            <div class="drop-zone" id="dropZone">
+                <p>拖动文件到这里或点击选择文件</p>
+                <input type="file" id="fileInput" multiple style="display: none;">
+            </div>
+            <button class="upload-btn" onclick="triggerFileInput()">选择文件</button>
+            <button class="upload-btn" onclick="handleUpload()">开始上传</button>
+            <div id="selectedFiles"></div>
+        </div>
     </div>
-    <table class="resource-table">
-      <thead>
-        <tr>
-          <th><input type="checkbox" /></th>
-          <th>文件名</th>
-          <th>大小</th>
-          <th>创建者</th>
-          <th>创建日期</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr class="folder">
-          <td><input type="checkbox" /></td>
-          <td>23232</td>
-          <td>3.0kb</td>
-          <td>123456</td>
-          <td>2025-2-09 12:32</td>
-        </tr>
-      </tbody>
+
+    <!-- 文件列表保持不变 -->
+    <h3>已上传文件列表</h3>
+    <table id="fileTable">
+        <thead>
+            <tr>
+                <th>文件名</th>
+                <th>大小</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody id="fileList"></tbody>
     </table>
-  </body>
+
+    <script>
+        // 文件上传相关逻辑
+        let selectedFiles = [];
+
+        function showUploadModal() {
+            document.getElementById('uploadModal').style.display = 'block';
+        }
+
+        function closeUploadModal() {
+            document.getElementById('uploadModal').style.display = 'none';
+            selectedFiles = [];
+            document.getElementById('selectedFiles').innerHTML = '';
+        }
+
+        function triggerFileInput() {
+            document.getElementById('fileInput').click();
+        }
+
+        // 拖放功能处理
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+
+        // 文件选择处理
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+
+        function handleFiles(files) {
+            selectedFiles = Array.from(files);
+            updateSelectedFilesList();
+        }
+
+        function updateSelectedFilesList() {
+            const list = selectedFiles.map((file, index) => `
+                <div class="file-item">
+                    <span>${file.name} (${formatFileSize(file.size)})</span>
+                    <span class="remove-btn" onclick="removeFile(${index})">×</span>
+                </div>
+            `).join('');
+            document.getElementById('selectedFiles').innerHTML = list;
+        }
+
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            updateSelectedFilesList();
+        }
+
+        // 保持原有的文件大小格式化函数和渲染函数
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+        function handleUpload() {
+            if (selectedFiles.length === 0) {
+                alert('请先选择要上传的文件');
+                return;
+            }
+            
+            // 这里添加实际的上传逻辑
+            const formData = new FormData();
+            selectedFiles.forEach(file => {
+                formData.append('files', file);
+                console.log(formData.get('files'));
+            });
+
+            // 示例上传请求
+            fetch('/home/resource/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Network response was not ok');
+                return response.text();
+            })
+            .then(text => {
+              try{
+                const data = JSON.parse(text);
+                if (data['code']==200){
+                  alert('上传成功');
+                  closeUploadModal();
+                  fetchFiles(); // 新增：上传成功后刷新列表
+                }
+              } catch(e) {
+                  console.error('JSON 解析失败：', e);
+                }
+            });
+        }
+
+        // 点击模态外部关闭
+        window.onclick = function(event) {
+            const modal = document.getElementById('uploadModal');
+            if (event.target == modal) {
+                closeUploadModal();
+            }
+        }
+        // 新增文件列表获取和下载功能
+        // 页面加载时获取文件列表
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchFiles();
+        });
+
+        // 获取文件列表
+        function fetchFiles() {
+            fetch('/home/resource/filelist')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.code === 200) {
+                        renderFileList(data.data);
+                    }
+                })
+                .catch(error => console.error('获取文件列表失败:', error));
+        }
+
+        // 渲染文件列表
+        function renderFileList(files) {
+            const tbody = document.getElementById('fileList');
+            tbody.innerHTML = files.map(file => `
+                <tr>
+                    <td>${file.name}</td>
+                    <td class="file-size">${formatFileSize(file.size)}</td>
+                    <td>
+                        <button class="download-btn" onclick='downloadFile(${JSON.stringify(file.name, null, 0)})'>下载</button>
+                        <span class="remove-btn" onclick='deleteFile(${JSON.stringify(file.name, null, 0)})'>×</span>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // 文件下载功能
+        function downloadFile(filename) {
+            const downloadUrl = `/home/download?filename=${encodeURIComponent(filename)}`;
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // 文件删除功能（可选增强）
+        function deleteFile(filename) {
+            if (confirm('确定要删除文件吗？')) {
+                fetch(`/home/deletefile?filename=${encodeURIComponent(filename)}`, {
+                    method: 'GET'
+                })
+                .then(response => {
+                    if (response.ok) {
+                        fetchFiles(); // 刷新文件列表
+                        alert('删除成功');
+                    } else {
+                        alert('删除失败');
+                    }
+                })
+                .catch(error => console.error('删除失败:', error));
+            }
+        }
+
+    </script>
+</body>
 </html>

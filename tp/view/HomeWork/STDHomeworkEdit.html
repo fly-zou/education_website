@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>智能作业查看系统</title>
+    <style>
+        :root {
+            --primary-blue: #4A90E2;
+            --success-green: #50C97D;
+            --text-dark: #2C3E50;
+            --background-light: #F8F9FA;
+            --border-gray: #ECEDEE;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            margin: 0;
+            background: #F5F7FA;
+            color: var(--text-dark);
+        }
+
+        /* 头部样式优化 */
+        .header {
+            display: flex;
+            align-items: center;
+            padding: 1rem 2rem;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .back-arrow {
+            font-size: 1.8rem;
+            color: var(--primary-blue);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .back-arrow:hover {
+            transform: translateX(-3px);
+        }
+
+        .title-container {
+            flex: 1;
+            margin-left: 1.5rem;
+        }
+
+        #assignmentTitle {
+            margin: 0;
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        /* 操作按钮美化 */
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .action-buttons button {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .action-buttons button:first-child {
+            background: #F0F2F5;
+            color: #606770;
+        }
+
+        .action-buttons button:first-child:hover {
+            background: #E4E6EB;
+        }
+
+        .action-buttons button:last-child {
+            background: var(--primary-blue);
+            color: white;
+        }
+
+        .action-buttons button:last-child:hover {
+            background: #357ABD;
+            box-shadow: 0 2px 6px rgba(74,144,226,0.3);
+        }
+
+        /* 题目区域优化 */
+        .question-creator {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+        }
+
+        .question-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+            transition: transform 0.2s;
+        }
+
+        .question-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        .question-content {
+            font-size: 1.1rem;
+            margin-bottom: 1.2rem;
+            font-weight: 500;
+            color: var(--text-dark);
+        }
+
+        /* 选项列表美化 */
+        .option-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+
+        .option-item {
+            display: flex;
+            align-items: center;
+            padding: 0.8rem;
+            border-radius: 8px;
+            background: var(--background-light);
+            transition: background 0.2s;
+            cursor: pointer;
+        }
+
+        .option-item:hover {
+            background: #F0F2F5;
+        }
+
+        input[type="radio"], 
+        input[type="checkbox"] {
+            width: 1.2rem;
+            height: 1.2rem;
+            margin-right: 0.8rem;
+        }
+
+        /* 填空题优化 */
+        .blank-input {
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid var(--border-gray);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+
+        .blank-input:focus {
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(74,144,226,0.1);
+            outline: none;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .header {
+                padding: 1rem;
+                flex-wrap: wrap;
+            }
+            
+            .action-buttons {
+                width: 100%;
+                margin-top: 1rem;
+                justify-content: flex-end;
+            }
+        }
+        /* 新增答案显示样式 */
+        .answer-status {
+            margin-top: 1rem;
+            padding: 0.8rem;
+            border-radius: 8px;
+            background: #f0f9eb;
+            color: #67c23a;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .answer-status::before {
+            content: "✓";
+            font-weight: bold;
+        }
+        .answer-status.empty {
+            background: #fef0f0;
+            color: #f56c6c;
+        }
+        .answer-status.empty::before {
+            content: "!";
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="back-arrow" onclick="history.back()">←</div>
+        <div class="title-container">
+            <h2 id="assignmentTitle"></h2>
+        </div>
+        <div class="action-buttons">
+            <button onclick="submitAnswers('save')">暂存草稿</button>
+            <button onclick="submitAnswers('submit')">提交作业</button>
+        </div>
+    </div>
+
+    <div class="question-creator">
+        <div id="questionsContainer"></div>
+    </div>
+    <script>
+        // 初始化时恢复已有数据
+        document.addEventListener('DOMContentLoaded', async () => {
+            // 从后端返回的数据恢复
+            const homeworkData = {
+                title: "{$title}",
+                questions: <?php echo json_encode($content); ?>,
+                answers: <?php echo json_encode($answers); ?>
+            };
+
+            // 恢复基础信息
+            document.getElementById('assignmentTitle').textContent = homeworkData.title;
+
+            // 恢复题目
+            if (Array.isArray(homeworkData.questions)) {
+                homeworkData.questions.forEach((q, index) => {
+                    createNewQuestion(q, index, homeworkData.answers[index]);
+                });
+            }
+        });
+
+        // 创建新题目（修改为作答界面）
+        function createNewQuestion(question, index, answer) {
+            const questionCard = document.createElement('div');
+            questionCard.className = 'question-card';
+            questionCard.dataset.index = index;
+            questionCard.dataset.type = question.type;
+            
+            let optionsHTML = '';
+            let answerStatus = '';
+            
+            // 根据答案生成选项状态
+            if (answer && answer !== '') {
+                if (question.type === 'single') {
+                    optionsHTML = question.options.map((opt, i) => `
+                        <label class="option-item">
+                            <input type="radio" name="q${index}" value="${i}" ${i == answer ? 'checked' : ''}>
+                            ${opt}
+                        </label>
+                    `).join('');
+                } else if (question.type === 'multiple') {
+                    const answers = answer.split(',');
+                    optionsHTML = question.options.map((opt, i) => `
+                        <label class="option-item">
+                            <input type="checkbox" name="q${index}" value="${i}" ${answers.includes(String(i)) ? 'checked' : ''}>
+                            ${opt}
+                        </label>
+                    `).join('');
+                } else {
+                    optionsHTML = `<input type="text" class="blank-input" name="q${index}" value="${answer}" placeholder="请输入答案">`;
+                }
+                
+                // 答案状态显示
+                answerStatus = `<div class="answer-status">已保存答案</div>`;
+            } else {
+                // 无答案时的默认生成
+                if (question.type === 'single') {
+                    optionsHTML = question.options.map((opt, i) => `
+                        <label class="option-item">
+                            <input type="radio" name="q${index}" value="${i}">
+                            ${opt}
+                        </label>
+                    `).join('');
+                } else if (question.type === 'multiple') {
+                    optionsHTML = question.options.map((opt, i) => `
+                        <label class="option-item">
+                            <input type="checkbox" name="q${index}" value="${i}">
+                            ${opt}
+                        </label>
+                    `).join('');
+                } else {
+                    optionsHTML = `<input type="text" class="blank-input" name="q${index}" placeholder="请输入答案">`;
+                }
+                
+                answerStatus = `<div class="answer-status empty">尚未作答</div>`;
+            }
+
+            questionCard.innerHTML = `
+                <div class="question-content">${index + 1}. ${question.content}</div>
+                <div class="option-list">${optionsHTML}</div>
+                ${answerStatus}
+            `;
+
+            document.getElementById('questionsContainer').appendChild(questionCard);
+        }
+        // 收集答案
+        function collectAnswers() {
+            const answers = [];
+            document.querySelectorAll('.question-card').forEach(card => {
+                const index = card.dataset.index;
+                const type = card.dataset.type;
+                let answer = '';
+
+                if (type === 'single') {
+                    const selected = card.querySelector('input[type="radio"]:checked');
+                    answer = selected ? selected.value : '';
+                } else if (type === 'multiple') {
+                    const selected = [...card.querySelectorAll('input[type="checkbox"]:checked')]
+                        .map(cb => cb.value).join(',');
+                    answer = selected;
+                } else {
+                    answer = card.querySelector('.blank-input').value || '';
+                }
+
+                answers[index] = answer; // 保持索引对应
+            });
+            return answers;
+        }
+
+        // 提交答案
+        async function submitAnswers(action) {
+            const toast = document.createElement('div');
+            toast.textContent = action === 'save' ? '正在保存...' : '正在提交...';
+            toast.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: var(--text-dark);
+                color: white;
+                padding: 12px 24px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            `;
+            document.body.appendChild(toast);
+
+            try {
+                const answers = collectAnswers();
+                const payload = {
+                    action: action,
+                    title: "{$title}",
+                    answers: answers
+                };
+
+                const response = await fetch('/homework/STDSubmit', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({STDAnswers: payload})
+                });
+                
+                const result = await response.json();
+                // 保持原有提交逻辑
+                setTimeout(() => {
+                    toast.textContent = action === 'save' ? '✓ 保存成功' : '✓ 提交成功';
+                    setTimeout(() => toast.remove(), 1500);
+                }, 800);
+            } catch (error) {
+                toast.textContent = `⚠ 操作失败: ${error.message}`;
+                toast.style.background = '#e74c3c';
+                setTimeout(() => toast.remove(), 2000);
+            }
+        }
+    </script>
+</body>
+</html>    

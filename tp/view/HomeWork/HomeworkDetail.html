@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>智能作业查看系统</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            padding: 15px 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .back-arrow {
+            font-size: 24px;
+            margin-right: 20px;
+            cursor: pointer;
+        }
+        .deadline-container {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .question-creator {
+            max-width: 800px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        .question-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            position: relative;
+        }
+        .type-selector {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .type-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 8px 12px;
+            border-radius: 20px;
+            border: 1px solid #007bff;
+        }
+        .type-item.active {
+            background: #007bff;
+            color: white;
+        }
+        .option-list {
+            margin: 15px 0;
+            counter-reset: option-counter;
+        }
+        .option-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            position: relative;
+        }
+        .option-item::before {
+            counter-increment: option-counter;
+            content: counter(option-counter, upper-alpha);
+            width: 24px;
+            text-align: center;
+            margin-right: 10px;
+            font-weight: bold;
+            color: #666;
+        }
+        .answer-box {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            padding: 15px 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+        .title-container {
+            flex: 1;
+            min-width: 300px;
+        }
+        .readonly {
+            background-color: #f9f9f9;
+            pointer-events: none;
+            border: none;
+        }
+        .student-homework-list {
+            margin-top: 30px;
+        }
+        .student-homework-item {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .student-homework-item:hover {
+            background-color: #f8f9fa;
+        }
+        .status-indicator {
+            margin-left: auto;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        /* 调整作业项布局 */
+        .student-homework-item {
+            display: flex;
+            align-items: center;
+            /* 原有其他样式保持不变 */
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="back-arrow" onclick="history.back()">←</div>
+        <div class="title-container">
+            <h2 id="assignmentTitle"></h2>
+        </div>
+        <div class="deadline-container">
+            <label>截止时间：</label>
+            <span id="deadline"></span>
+        </div>
+    </div>
+    <div class="question-creator">
+        <div id="questionsContainer"></div>
+        <div class="student-homework-list" id="studentHomeworkList"></div>
+    </div>
+
+    <script>
+        // 初始化时恢复已有数据
+        document.addEventListener('DOMContentLoaded', async () => {
+            // 从后端返回的数据恢复
+            const homeworkData = {
+                title: "{$title}",      // 需要确保后端返回的数据结构
+                deadline: "{$deadline}",// 这里使用模板字符串需要实际数据替换
+                questions: <?php echo json_encode($content); ?>
+            };
+
+            // 恢复基础信息
+            document.getElementById('assignmentTitle').textContent = homeworkData.title;
+            document.getElementById('deadline').textContent = homeworkData.deadline;
+
+            // 恢复题目
+            if (Array.isArray(homeworkData.questions)) {
+                homeworkData.questions.forEach(q => {
+                    createNewQuestion(q);
+                });
+            }
+
+            // 获取学生作业列表，传递作业title给后端
+            try {
+                const title = encodeURIComponent(homeworkData.title);
+                const response = await fetch(`/homework/studenthomework?title=${title}`);
+                const studentHomeworkData = await response.json();
+                if (studentHomeworkData.code === 200) {
+                    const studentHomeworkList = document.getElementById('studentHomeworkList');
+                    studentHomeworkData.studentHomeworks.forEach(studentHomework => {
+                        const item = document.createElement('div');
+                        item.className = 'student-homework-item';
+                        
+                        // 使用innerHTML添加可解析的HTML结构
+                        item.innerHTML = `
+                            <span>${studentHomework.student_name}</span>
+                            ${studentHomework.action === 'corrected' ? 
+                                '<div class="status-indicator">已批改</div>' : ''}
+                        `;
+
+                        item.dataset.id = studentHomework.id;
+                        item.addEventListener('click', () => {
+                            window.location.href = `/homework/correct?id=${studentHomework.id}&title=${studentHomework.title}`;
+                        });
+                        studentHomeworkList.appendChild(item);
+                    });
+                }
+            } catch (error) {
+                console.error('获取学生作业列表失败:', error);
+            }
+        });
+
+        // 创建新题目
+        function createNewQuestion(existingQuestion) {
+            const questionCard = document.createElement('div');
+            questionCard.className = 'question-card';
+            questionCard.innerHTML = `
+                <div class="type-selector">
+                    ${['single', 'multiple', 'blank'].map(type => `
+                        <div class="type-item ${type === (existingQuestion?.type || 'single') ? 'active' : ''} readonly" >
+                            <div class="type-dot"></div>
+                            ${type === 'single' ? '单选题' : type === 'multiple' ? '多选题' : '填空题'}
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="question-content readonly" 
+                    style="width: 100%; height: auto; padding: 10px;">
+                    ${existingQuestion?.content || ''}
+                </div>
+                <div class="option-list" style="${existingQuestion?.type === 'blank' ? 'display:none' : ''}">
+                    ${(existingQuestion?.type === 'blank') ? '' : createOptions(existingQuestion?.options || ['', '', '', ''])}
+                </div>
+                <div class="answer-box">
+                    <label>正确答案：</label>
+                    <span class="answer-input readonly">
+                        ${existingQuestion?.type === 'multiple' ? existingQuestion.answer : existingQuestion?.answer || ''}
+                    </span>
+                </div>
+            `;
+
+            // 插入题目
+            const container = document.getElementById('questionsContainer');
+            container.appendChild(questionCard);
+        }
+
+        // 创建选项的独立函数
+        function createOptions(options) {
+            return options.map((value, index) => `
+                <div class="option-item readonly">
+                    <span>${value}</span>
+                </div>
+            `).join('');
+        }
+    </script>
+</body>
+</html>    

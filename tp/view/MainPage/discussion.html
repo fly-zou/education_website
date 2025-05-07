@@ -7,74 +7,207 @@
     <style>
       /* 整体布局 */
       body {
-        font-family: Arial, sans-serif;
+        font-family: 'Segoe UI', system-ui, sans-serif;
         margin: 0;
-        padding: 0;
+        padding: 20px;
+        background-color: #f8f9fa;
+        color: #333;
       }
 
       /* 时间筛选器样式 */
       .filter-container {
-        padding: 10px;
-        background-color: #f4f4f4;
+        padding: 15px 20px;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+      }
+
+      .filter-container label {
+        font-weight: 600;
+        margin-right: 10px;
+        color: #495057;
+      }
+
+      .filter-container input[type="date"] {
+        padding: 8px 12px;
+        border: 2px solid #dee2e6;
+        border-radius: 6px;
+        margin-right: 10px;
+        transition: border-color 0.3s ease;
+      }
+
+      .filter-container input[type="date"]:focus {
+        border-color: #4dabf7;
+        outline: none;
+      }
+
+      .filter-container button {
+        background: linear-gradient(135deg, #4dabf7 0%, #228be6 100%);
+        color: white;
+        padding: 8px 20px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+      }
+
+      .filter-container button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 3px 12px rgba(77, 171, 247, 0.4);
       }
 
       /* 话题展示框样式 */
       .topic-container {
-        padding: 10px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        padding: 20px;
       }
 
       /* 话题列表样式 */
       .topic-list {
         list-style-type: none;
         padding: 0;
+        margin: 0;
       }
 
       .topic-item {
-        border: 1px solid #ccc;
-        padding: 10px;
-        margin-bottom: 10px;
+        background: white;
+        border-left: 4px solid #4dabf7;
+        padding: 20px;
+        margin-bottom: 15px;
+        border-radius: 8px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        transition: transform 0.2s, box-shadow 0.2s;
+      }
+
+      .topic-item:hover {
+        transform: translateX(5px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      }
+
+      .topic-item strong {
+        color: #1864ab;
+        font-size: 1.1rem;
+        display: block;
+        margin-bottom: 8px;
+      }
+
+      .topic-item br {
+        margin: 8px 0;
+        display: block;
+        content: " ";
       }
 
       /* 分页按钮样式 */
       .pagination {
-        margin-top: 10px;
+        margin-top: 20px;
+        display: flex;
+        gap: 10px;
       }
 
       .pagination button {
-        padding: 5px 10px;
-        margin-right: 5px;
+        background-color: #f8f9fa;
+        border: 2px solid #dee2e6;
+        padding: 8px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .pagination button:hover {
+        background-color: #4dabf7;
+        color: white;
+        border-color: #4dabf7;
       }
 
       /* 右侧选项卡样式 */
       .tab-container {
         position: fixed;
-        top: 10px;
-        right: 10px;
+        top: 20px;
+        right: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
       }
 
       .tab {
-        display: inline-block;
-        padding: 5px 10px;
-        border: 1px solid #ccc;
+        background: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         cursor: pointer;
+        transition: all 0.2s ease;
+        border: 2px solid transparent;
+      }
+
+      .tab:hover {
+        transform: translateX(-5px);
+        border-color: #4dabf7;
+        background: #e7f5ff;
       }
 
       /* 新建话题样式 */
       .new-topic {
-        padding: 10px;
-        background-color: #f4f4f4;
-        margin-top: 10px;
+        margin-top: 30px;
+        background: white;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      }
+
+      .new-topic h3 {
+        color: #1864ab;
+        margin-top: 0;
+        margin-bottom: 20px;
+        font-size: 1.3rem;
       }
 
       .new-topic input,
       .new-topic textarea {
         width: 100%;
-        padding: 5px;
-        margin-bottom: 10px;
+        padding: 12px;
+        margin-bottom: 15px;
+        border: 2px solid #dee2e6;
+        border-radius: 6px;
+        transition: border-color 0.3s ease;
+      }
+
+      .new-topic input:focus,
+      .new-topic textarea:focus {
+        border-color: #4dabf7;
+        outline: none;
       }
 
       .new-topic button {
-        padding: 5px 10px;
+        background: linear-gradient(135deg, #40c057 0%, #2b8a3e 100%);
+        color: white;
+        padding: 12px 30px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: transform 0.2s, box-shadow 0.2s;
+      }
+
+      .new-topic button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 3px 12px rgba(64, 192, 87, 0.4);
+      }
+
+      @media (max-width: 768px) {
+        body {
+          padding: 15px;
+        }
+        .tab-container {
+          position: static;
+          flex-direction: row;
+          margin-bottom: 20px;
+        }
+        .tab {
+          padding: 10px 15px;
+        }
       }
     </style>
   </head>

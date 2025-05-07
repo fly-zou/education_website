@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>课程章节详情</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+        }
+       .header {
+            background-color: #f0f0f0;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+       .return-btn {
+            text-decoration: none;
+            color: #333;
+        }
+       .main-container {
+            display: flex;
+            margin-top: 10px;
+        }
+       .left-panel {
+            flex: 3;
+            padding: 10px;
+        }
+       .right-panel {
+            flex: 1;
+            padding: 10px;
+            border-left: 1px solid #ddd;
+        }
+       .ppt-image {
+            width: 100%;
+            height: auto;
+            margin-bottom: 10px;
+        }
+       .toc-list {
+            list-style: none;
+            padding: 0;
+        }
+       .toc-list li {
+            padding: 5px 10px;
+            margin: 5px 0;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+       .toc-list li:hover {
+            background-color: #f0f0f0;
+        }
+       .active {
+            background-color: #e0e0e0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="#" class="return-btn">返回课程</a>
+        <h2>章节详情</h2>
+    </div>
+    <div class="main-container">
+        <div class="left-panel">
+            <img src="#" class="ppt-image" id="pptImg" alt="PPT展示">
+        </div>
+        <div class="right-panel">
+            <ul class="toc-list" id="tocList"></ul>
+        </div>
+    </div>
+
+    <script>
+        // 模拟从后端获取目录数据（实际开发中用 fetch 或其他方式）
+        const mockTocData = [
+            { title: '2.4 框架知识表示', id: '2.4' },
+            { title: '3 自动推理与专家系统', id: '3' },
+            { title: '3.1 引言', id: '3.1' },
+            { title: '3.2 确定性推理', id: '3.2' },
+            { title: '3.3 不确定性推理', id: '3.3' },
+            { title: '3.4 专家系统简介', id: '3.4' },
+            { title: '3.5 实践1: CLIPS自动推理', id: '3.5' },
+            { title: '4 知识图谱', id: '4' },
+            { title: '4.1 引言', id: '4.1' },
+            { title: '4.2 典型知识图谱', id: '4.2' },
+            { title: '4.3 知识图谱技术与应用', id: '4.3' },
+            { title: '4.4 实践2: Protege实践', id: '4.4' },
+            { title: '4.5 2023ppt', id: '4.5' },
+            { title: '5 搜索技术', id: '5' },
+            { title: '5.1 引言', id: '5.1' },
+            { title: '5.2 状态空间图模型', id: '5.2' }
+        ];
+
+        // 模拟从后端获取 PPT 图片 URL（实际开发中从接口获取）
+        const pptUrl = "https://example.com/your-ppt-image.jpg"; // 替换为真实 URL
+
+        // 渲染 PPT 图片
+        document.getElementById('pptImg').src = pptUrl;
+
+        // 渲染目录
+        const tocList = document.getElementById('tocList');
+        mockTocData.forEach(item => {
+            const li = document.createElement('li');
+            li.textContent = item.title;
+            li.dataset.id = item.id;
+            li.addEventListener('click', function() {
+                // 点击时移除其他项的高亮，添加当前项的高亮
+                const allItems = document.querySelectorAll('.toc-list li');
+                allItems.forEach(li => li.classList.remove('active'));
+                this.classList.add('active');
+                // 此处可添加进一步的逻辑，比如根据点击项加载对应内容
+            });
+            tocList.appendChild(li);
+        });
+    </script>
+</body>
+</html>

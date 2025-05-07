@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>我的作业</title>
+    <style>
+      /* 新增个人状态样式 */
+      .submit-status {
+        font-size: 0.9em;
+        color: #17a2b8;
+        margin-left: 15px;
+      }
+      .completed-status {
+        color: #28a745 !important;
+      }
+      .overdue {
+        color: #dc3545 !important;
+      }
+      .assignment-details {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .status-container {
+        display: flex;
+        align-items: center;
+      }
+      /* 调整原有样式 */
+      .assignment {
+        cursor: pointer;
+        padding: 15px;
+        margin: 10px 0;
+        border-radius: 8px;
+        background: white;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        transition: all 0.2s;
+        position: relative; /* 为点击区域提供定位上下文 */
+      }
+      .assignment:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      }
+      .expired {
+        background: #f0f0f0;
+        color: #999;
+      }
+      .time-remaining {
+        font-size: 0.9em;
+        color: #ffc107;
+      }
+      .filter-container {
+        background: white;
+        padding: 15px 25px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        margin-bottom: 20px;
+      }
+      /* 新增整体链接样式 */
+      .assignment-link {
+        display: block;
+        color: inherit;
+        text-decoration: none;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="filter-container">
+      <div class="filter-group">
+        <span>作业筛选：</span>
+        <div class="filter">
+          <input type="radio" name="filter" value="all" id="filterAll" checked />
+          <label for="filterAll">全部</label>
+          <input type="radio" name="filter" value="completed" id="filterCompleted" />
+          <label for="filterCompleted">已完成</label>
+          <input type="radio" name="filter" value="incomplete" id="filterIncomplete" />
+          <label for="filterIncomplete">未完成</label>
+        </div>
+      </div>
+    </div>
+
+    <div id="assignmentsContainer" class="assignments-container"></div>
+
+    <script>
+      let homeworks = [];
+      let updateInterval;
+
+      // 初始化
+      document.addEventListener('DOMContentLoaded', () => {
+        fetchHomeworks();
+        addFilterListeners();
+      });
+
+      // 获取作业数据（学生视角）
+      async function fetchHomeworks() {
+        try {
+          const response = await fetch('/homework/STDhomeworks');
+          const data = await response.json();
+          
+          if (data.code === 200) {
+            homeworks = data.assignments.map(hw => ({
+              ...hw,
+              title: hw.title,
+              deadline: new Date(hw.deadline),
+              actionType: hw.action,       // 保留原始动作类型
+              submitted: hw.action === 'submit',  // 判断是否已提交
+              corrected: hw.corrected,
+              score: hw.score || '未评分'
+            }));
+            
+            renderHomeworks(homeworks);
+            startAutoUpdate();
+          }
+        } catch (error) {
+          console.error('获取作业失败:', error);
+        }
+      }
+
+      // 渲染作业列表
+      function renderHomeworks(data) {
+        const container = document.getElementById('assignmentsContainer');
+        container.innerHTML = data.map(hw => {
+          const timeInfo = calculateRemainingTime(hw.deadline);
+          const isExpired = timeInfo.expired;
+
+          // 根据是否批改决定链接
+          const linkPath = hw.corrected ? 
+            `/homework/STDview?title=${encodeURIComponent(hw.title)}` : 
+            `/homework/STDedit?title=${encodeURIComponent(hw.title)}`;
+
+          return `
+            <a href="${linkPath}" class="assignment-link">
+              <div class="assignment ${isExpired ? 'expired' : ''}">
+                <div class="assignment-details">
+                  <h3>${hw.title}</h3>
+                  <div class="status-container">
+                    <span class="assignment-status ${hw.submitted ? 'completed-status' : ''}">
+                      ${hw.submitted ? '已完成' : '未完成'}
+                      ${isExpired && !hw.submitted ? '<span class="overdue">(已过期)</span>' : ''}
+                    </span>
+                    ${!isExpired ? `
+                      <span class="time-remaining">
+                        (剩余 ${timeInfo.days}天 ${timeInfo.hours}小时 ${timeInfo.minutes}分)
+                      </span>
+                    ` : ''}
+                    ${hw.submitted ? `
+                      <span class="submit-status">
+                        ${hw.corrected ? `已批改 · 得分：${hw.score}` : '待批改'}
+                      </span>
+                    ` : ''}
+                  </div>
+                </div>
+              </div>
+            </a>
+          `;
+        }).join('');
+      }
+      // 筛选逻辑（按完成状态）
+      function addFilterListeners() {
+        document.querySelectorAll('input[name="filter"]').forEach(radio => {
+          radio.addEventListener('change', (e) => {
+            const filtered = homeworks.filter(hw => {
+              if (e.target.value === 'completed') return hw.submitted;
+              if (e.target.value === 'incomplete') return !hw.submitted;
+              return true;
+            });
+            renderHomeworks(filtered);
+          });
+        });
+      }
+
+      // 剩余时间计算（保持不变）
+      function calculateRemainingTime(endTime) {
+        const now = new Date();
+        const diff = endTime - now;
+        
+        if (diff <= 0) return { expired: true };
+
+        return {
+          days: Math.floor(diff / 864e5),
+          hours: Math.floor((diff % 864e5) / 36e5),
+          minutes: Math.floor((diff % 36e5) / 6e4),
+          seconds: Math.floor((diff % 6e4) / 1e3),
+          expired: false
+        };
+      }
+
+      // 自动更新时间
+      function startAutoUpdate() {
+        updateInterval = setInterval(() => {
+          renderHomeworks(homeworks);
+        }, 1000);
+      }
+    </script>
+  </body>
+</html>    

@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>作业批改查看系统</title>
+    <style>
+    :root {
+        --primary-blue: #4A90E2;
+        --success-green: #50C97D;
+        --text-dark: #2C3E50;
+        --background-light: #F8F9FA;
+        --border-gray: #ECEDEE;
+        --score-color: #FF9800;
+        --box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    body {
+        font-family: 'Segoe UI', system-ui, sans-serif;
+        line-height: 1.6;
+        background-color: var(--background-light);
+        padding: 2rem 1rem;
+        color: var(--text-dark);
+    }
+
+    /* 头部样式 */
+    .header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 2rem;
+        padding: 1rem;
+        background: white;
+        border-radius: 8px;
+        box-shadow: var(--box-shadow);
+        position: relative;
+    }
+
+    .back-arrow {
+        font-size: 1.8rem;
+        cursor: pointer;
+        padding: 0 1rem;
+        transition: color 0.2s;
+    }
+
+    .back-arrow:hover {
+        color: var(--primary-blue);
+    }
+
+    .title-container {
+        flex: 1;
+        padding: 0 1rem;
+    }
+
+    .title-container h2 {
+        margin: 0;
+        color: var(--text-dark);
+        font-weight: 600;
+    }
+
+    /* 题目容器 */
+    .question-creator {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    /* 题目卡片 */
+    .question-card {
+        position: relative;
+        background: white;
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+        border-radius: 8px;
+        box-shadow: var(--box-shadow);
+        transition: transform 0.2s;
+    }
+
+    .question-card:hover {
+        transform: translateY(-2px);
+    }
+
+    .score-label {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: var(--score-color);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 700;
+        font-size: 1rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .question-content {
+        font-size: 1.1rem;
+        font-weight: 500;
+        margin-bottom: 1.5rem;
+        color: var(--text-dark);
+    }
+
+    /* 选项样式 */
+    .option-list {
+        display: grid;
+        gap: 0.8rem;
+    }
+
+    .option-item {
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+        border: 1px solid var(--border-gray);
+        border-radius: 6px;
+        transition: all 0.2s;
+        background: white;
+    }
+
+    .option-item:hover {
+        border-color: var(--primary-blue);
+    }
+
+    input[type="radio"],
+    input[type="checkbox"] {
+        width: 1.2em;
+        height: 1.2em;
+        margin-right: 1rem;
+        accent-color: var(--primary-blue);
+    }
+
+    /* 填空题样式 */
+    .blank-input {
+        padding: 0.8rem;
+        border: 1px solid var(--border-gray);
+        border-radius: 6px;
+        background: white;
+        min-width: 200px;
+    }
+
+    .correct-answer {
+        color: var(--success-green);
+        font-weight: 500;
+        margin-top: 0.5rem;
+    }
+
+    /* 教师评语 */
+    .teacher-comment {
+        margin-top: 1.5rem;
+        padding: 1.2rem;
+        background: #f8f9fa;
+        border-left: 4px solid var(--primary-blue);
+        border-radius: 6px;
+        font-size: 0.95rem;
+    }
+
+    .teacher-comment strong {
+        color: var(--text-dark);
+    }
+
+    .total-score {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: var(--score-color);
+        padding-right: 1rem;
+    }
+
+    /* 正确选项高亮 */
+    [data-correct="true"] + span {
+        position: relative;
+    }
+
+    [data-correct="true"]:checked::before {
+        content: "✓";
+        position: absolute;
+        left: -25px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--success-green);
+        font-weight: 700;
+    }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="back-arrow" onclick="history.back()">←</div>
+        <div class="title-container">
+            <h2 id="assignmentTitle"></h2>
+        </div>
+        <div id="totalScoreContainer" class="total-score"></div>
+    </div>
+
+    <div class="question-creator">
+        <div id="questionsContainer"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            // 示例数据（需要替换为真实数据）
+            const homeworkData = {
+                title: "{$title}",      // 需要确保后端返回的数据结构
+                questions: <?php echo json_encode($content); ?>,
+                answers: <?php echo json_encode($answers); ?>
+            };
+
+            // 显示基础信息
+            document.getElementById('assignmentTitle').textContent = homeworkData.title;
+
+            // 计算总分
+            let totalScore = 0;
+            homeworkData.questions.forEach(q => {
+                if(q.score) totalScore += parseInt(q.score);
+            });
+
+            // 显示总分（如果有批改）
+            if(totalScore > 0){
+                document.getElementById('totalScoreContainer').textContent = `总分：${totalScore}`;
+            }
+
+            // 生成题目
+            homeworkData.questions.forEach((q, index) => {
+                createQuestionCard(q, index, homeworkData.answers[index]);
+            });
+        });
+
+        function createQuestionCard(question, index, studentAnswer) {
+            const questionCard = document.createElement('div');
+            questionCard.className = 'question-card';
+            questionCard.dataset.index = index;
+            
+            let optionsHTML = '';
+            let scoreHTML = '';
+            let commentHTML = '';
+
+            // 显示分数
+            if(question.score !== undefined){
+                scoreHTML = `<div class="score-label">得分：${question.score}</div>`;
+            }
+
+            // 显示正确答案和评语
+            if(question.correct){
+                commentHTML = `
+                    <div class="teacher-comment">
+                        <strong>参考答案：</strong>
+                        ${getCorrectAnswerDisplay(question)}
+                        ${question.comment ? `<br><strong>评语：</strong>${question.comment}` : ''}
+                    </div>
+                `;
+            }
+
+            // 根据题目类型生成内容
+            switch(question.type){
+                case 'single':
+                    optionsHTML = question.options.map((opt, i) => `
+                        <label class="option-item">
+                            <input type="radio" 
+                                ${i == studentAnswer ? 'checked' : ''}
+                                ${i == question.correct ? 'data-correct="true"' : ''}>
+                            ${opt}
+                        </label>
+                    `).join('');
+                    break;
+                    
+                case 'multiple':
+                    const studentAnswers = studentAnswer?.split(',') || [];
+                    optionsHTML = question.options.map((opt, i) => `
+                        <label class="option-item">
+                            <input type="checkbox"
+                                ${studentAnswers.includes(String(i)) ? 'checked' : ''}
+                                ${question.correct?.split(',').includes(String(i)) ? 'data-correct="true"' : ''}>
+                            ${opt}
+                        </label>
+                    `).join('');
+                    break;
+                    
+                case 'blank':
+                    optionsHTML = `
+                        <div class="blank-input">${studentAnswer || '未作答'}</div>
+                        ${question.correct ? `<div class="correct-answer">正确答案：${question.correct}</div>` : ''}
+                    `;
+                    break;
+            }
+
+            questionCard.innerHTML = `
+                ${scoreHTML}
+                <div class="question-content">${index + 1}. ${question.content}</div>
+                <div class="option-list">${optionsHTML}</div>
+                ${commentHTML}
+            `;
+
+            // 添加正确答案标记
+            questionCard.querySelectorAll('[data-correct]').forEach(item => {
+                item.parentElement.style.background = '#e8f5e9';
+                item.parentElement.style.border = '1px solid #81c784';
+            });
+
+            document.getElementById('questionsContainer').appendChild(questionCard);
+        }
+
+        function getCorrectAnswerDisplay(question){
+            switch(question.type){
+                case 'single':
+                    return question.options[question.correct];
+                case 'multiple':
+                    return question.correct.split(',').map(i => question.options[i]).join(', ');
+                case 'blank':
+                    return question.correct;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,110 +1,185 @@
-<!doctype html>
-<html lang="zh-CN">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale = 1.0" />
-    <title>AI助手</title>
-    <style>
-         /* 整体聊天框容器样式 */
-      .chat-container {
-             display: flex;
-             flex - direction: column;
-             max - width: 600px;
-             margin: 0 auto;
-             padding: 20px;
-             border: 1px solid #ccc;
-             border - radius: 5px;
-             box - shadow: 0 0 5px rgba(0, 0, 0, 0.1);
-         }
+<!DOCTYPE html>
+<html lang="zh-CN" style="height:100%">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI助手</title>
+<style>
+:root {
+  --primary: #4a90e2;
+  --secondary: #7ed6df;
+  --bg: #f8f9fa;
+}
 
-         /* 输入框样式 */
-      .AI_input {
-             margin - bottom: 10px;
-         }
+/* 全屏适配‌:ml-citation{ref="1" data="citationList"} */
+html, body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
 
-         textarea {
-             width: 100%;
-             height: 50px;
-             padding: 10px;
-             border: 1px solid #ccc;
-             border - radius: 3px;
-             font - size: 14px;
-         }
+/* 容器美化‌:ml-citation{ref="3" data="citationList"} */
+.chat-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  box-shadow: inset 0 0 30px rgba(255,255,255,0.3);
+}
 
-         /* 发送按钮样式 */
-      .send-button {
-             width: 100px;
-             height: 30px;
-             background - color: #007BFF;
-             color: white;
-             border: none;
-             border - radius: 3px;
-             cursor: pointer;
-             font - size: 14px;
-         }
+/* 消息区域优化‌:ml-citation{ref="3,5" data="citationList"} */
+.chat-history {
+  flex: 1;
+  padding: 1.5rem;
+  overflow-y: overlay;
+  backdrop-filter: blur(5px);
+}
 
-         /* 聊天记录显示区域样式 */
-      .chat-history {
-             border: 1px solid #ccc;
-             border - radius: 3px;
-             padding: 10px;
-             height: 300px;
-             overflow - y: scroll;
-         }
-    </style>
-  </head>
+.chat-history div {
+  max-width: 80%;
+  margin: 1rem 0;
+  padding: 1rem 1.5rem;
+  border-radius: 15px;
+  animation: fadeIn 0.3s ease;
+}
 
-  <body>
-    <div class="chat-container">
-      <!-- 聊天记录显示区域 -->
-      <div class="chat-history"></div>
-      <div class="AI_input">
-        <textarea
-          dir="ltr"
-          rows="1"
-          autocomplete="off"
-          data-testid="chat_input_input"
-          cols="20"
-          placeholder="发消息"
-          spellcheck="false"
-          data-ms-editor="true"
-        ></textarea>
-      </div>
-      <button class="send-button">发送</button>
-    </div>
-    <script>
-      // 获取发送按钮和输入框元素
-      const sendButton = document.querySelector(".send-button");
-      const inputTextarea = document.querySelector("textarea");
-      const chatHistory = document.querySelector(".chat-history");
+/* 用户消息气泡‌:ml-citation{ref="3" data="citationList"} */
+.chat-history div:nth-child(odd) {
+  background: var(--primary);
+  color: white;
+  margin-left: auto;
+  border-bottom-right-radius: 5px;
+  box-shadow: 0 4px 6px rgba(74,144,226,0.2);
+}
 
-      sendButton.addEventListener("click", function () {
-        const userMessage = inputTextarea.value;
-        if (userMessage) {
-          // 创建一个新的div来显示用户消息
-          const userMessageDiv = document.createElement("div");
-          userMessageDiv.textContent = "你: " + userMessage;
-          chatHistory.appendChild(userMessageDiv);
-          inputTextarea.value = "";
+/* AI消息气泡‌:ml-citation{ref="3" data="citationList"} */
+.chat-history div:nth-child(even) {
+  background: rgba(255,255,255,0.95);
+  margin-right: auto;
+  border-radius: 5px 20px 20px 20px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+}
 
-          // 模拟AI回复
-          setTimeout(() => {
-            const aiMessageDiv = document.createElement("div");
-            aiMessageDiv.textContent =
-              "AI: 你好，我是AI助手，你有什么问题可以问我哦！";
-            chatHistory.appendChild(aiMessageDiv);
+/* 输入框美化‌:ml-citation{ref="3,5" data="citationList"} */
+.AI_input {
+  padding: 1.5rem;
+  background: rgba(255,255,255,0.9);
+  border-top: 1px solid rgba(0,0,0,0.08);
+  backdrop-filter: blur(10px);
+}
 
-            const userMessageDiv2 = document.createElement("div");
-            userMessageDiv2.textContent = "你: 你能做什么";
-            chatHistory.appendChild(userMessageDiv2);
+textarea {
+  width: 100%;
+  padding: 14px 20px;
+  border: 2px solid rgba(74,144,226,0.3);
+  border-radius: 25px;
+  font-size: 16px;
+  transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+}
 
-            const userMessageDiv3 = document.createElement("div");
-            userMessageDiv3.textContent =
-              "AI：作为计算机科学专业的博士后，我在高校教授数据结构课程。我的主要职责包括通过晓晓平台教授数据结构的基本概念、算法和应用，解答你在学习过程中遇到的问题，提供个性化的学习支持和指导，以及管理和组织你们的学习进度，确保你们按时完成课程任务。我还会定期评估你们的学习情况，并提供反馈和改进建议哦。如果你有任何关于数据结构的问题，随时都可以问我。";
-            chatHistory.appendChild(userMessageDiv3);
-          }, 1000);
-        }
-      });
-    </script>
-  </body>
+textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 12px rgba(74,144,226,0.15);
+}
+
+/* 按钮美化‌:ml-citation{ref="3" data="citationList"} */
+.send-button {
+  background: linear-gradient(90deg, var(--primary), var(--secondary));
+  color: white;
+  border: none;
+  padding: 12px 30px;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.send-button:hover {
+  transform: translateY(-2px);
+}
+
+/* 滚动条优化‌:ml-citation{ref="5" data="citationList"} */
+.chat-history::-webkit-scrollbar {
+  width: 8px;
+}
+
+.chat-history::-webkit-scrollbar-thumb {
+  background: rgba(74,144,226,0.3);
+  border-radius: 4px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* 移动端适配‌:ml-citation{ref="3" data="citationList"} */
+@media (max-width: 768px) {
+  .chat-history {
+    padding: 1rem;
+  }
+  
+  .chat-history div {
+    max-width: 90%;
+    padding: 12px;
+    font-size: 14px;
+  }
+  
+  .AI_input {
+    padding: 1rem;
+  }
+}
+</style>
+</head>
+
+<body>
+<div class="chat-container">
+  <div class="chat-history"></div>
+  
+  <div class="AI_input">
+    <textarea dir="ltr" rows="1" autocomplete="off" placeholder="发消息" spellcheck="false"></textarea>
+  </div>
+  
+  <button class="send-button">发送</button>
+</div>
+
+<!-- 保持原有JS逻辑 -->
+<script>
+const sendButton = document.querySelector(".send-button");
+const inputTextarea = document.querySelector("textarea");
+const chatHistory = document.querySelector(".chat-history");
+
+// 动态调整输入框高度
+inputTextarea.addEventListener('input', function() {
+  this.style.height = 'auto';
+  this.style.height = this.scrollHeight + 'px';
+});
+
+sendButton.addEventListener("click", function(){
+  const userMessage = inputTextarea.value;
+  if (userMessage){
+    setTimeout(() => {
+      const userMessageDiv = document.createElement('div');
+      userMessageDiv.textContent = userMessage;
+      chatHistory.appendChild(userMessageDiv);
+      inputTextarea.value = '';
+      
+      fetch('/home/AITalk',{
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({user_talk: userMessage})
+      })
+      .then(response => response.json())
+      .then(data => {
+        const aiMessageDiv = document.createElement('div');
+        aiMessageDiv.textContent = data.resp;
+        chatHistory.appendChild(aiMessageDiv);
+        chatHistory.scrollTop = chatHistory.scrollHeight;
+      })
+    }, 1000)
+  }
+})
+</script>
+</body>
 </html>

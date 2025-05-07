@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>教学视频</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2196F3;
+            --control-height: 60px;
+        }
+
+        body {
+            background: #f0f2f5; /* 修改为浅灰色背景 */
+            font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif; /* 修改字体 */
+            display: flex;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            gap: 20px;
+        }
+
+        /* 视频播放器容器 */
+        .player-container {
+            flex: 2;
+            max-width: 1000px;
+            background: #000;
+            border-radius: 8px; /* 减小圆角 */
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1); /* 调整阴影 */
+            height: fit-content;
+        }
+
+        /* 章节目录容器 */
+        .catalog-container {
+            flex: 1;
+            max-width: 360px;
+            background: #fff; /* 改为白色背景 */
+            border-radius: 8px;
+            padding: 16px; /* 调整内边距 */
+            color: #333; /* 深灰色文字 */
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1); /* 添加阴影 */
+        }
+
+        .video-wrapper {
+            position: relative;
+            padding-top: 56.25%;
+        }
+
+        #videoPlayer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* 章节列表样式 */
+        .chapter-list {
+            margin-top: 12px;
+        }
+
+        .chapter-item {
+            padding: 10px 12px; /* 调整内边距 */
+            border-radius: 6px;
+            margin-bottom: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #f8f9fa; /* 添加浅灰背景 */
+        }
+        /* 更新目录项样式 */
+        .chapter-item.dir {
+            background: #f8f9fa;
+            margin: 8px 0;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        /* 任务项样式 */
+        .chapter-item.task {
+            margin-left: 32px;
+            padding: 8px 12px;
+            border-left: 2px solid #dee2e6;
+            color: #666;
+            background: none;
+            position: relative;
+        }
+
+
+        .chapter-item.dir:hover {
+            background: #e9ecef;
+            transform: translateX(3px);
+        }
+
+        /* 更新编号样式 */
+        .chapter-number {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            background: var(--primary-color);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            color: white;
+            font-weight: 500;
+        }
+        .task-item {
+            padding: 8px 12px;
+            margin-left: 24px;
+            border-left: 2px solid #dee2e6; /* 调整边框颜色 */
+            position: relative;
+            color: #666; /* 灰色文字 */
+        }
+
+        /* 控制栏样式 */
+        .controls {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.8);
+            gap: 12px;
+        }
+
+        .progress-container {
+            flex-grow: 1;
+            height: 4px; /* 调整高度 */
+            background: rgba(255,255,255,0.2);
+            border-radius: 2px;
+            cursor: pointer;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: var(--primary-color);
+            border-radius: 2px;
+            width: 0;
+            transition: width 0.1s linear;
+        }
+
+        /* 新增课程目录标题样式 */
+        .catalog-container h2 {
+            color: #1a1a1a;
+            font-size: 18px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+                padding: 10px;
+            }
+            .player-container, 
+            .catalog-container {
+                max-width: 100%;
+            }
+        }
+        /* 任务名称显示样式 */
+        .task-name-overlay {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 14px;
+            z-index: 1000;
+            backdrop-filter: blur(2px);
+        }
+
+        /* 删除按钮样式 */
+        .delete-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 0, 0, 0.7);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            z-index: 1000;
+            transition: all 0.2s;
+        }
+
+        .delete-btn:hover {
+            background: rgba(255, 0, 0, 0.9);
+        }
+    </style>
+</head>
+<body>
+    <!-- 视频左上角任务名称 -->
+    <div class="task-name-overlay" id="taskName"></div>
+
+    <!-- 视频右上角删除按钮 -->
+    <button class="delete-btn" id="deleteBtn">
+        <i class="fas fa-trash"></i>
+    </button>
+    <!-- 视频播放器 -->
+    <div class="player-container">
+        <div class="video-wrapper">
+            <video id="videoPlayer" crossorigin="anonymous">
+                <source src="" type="video/mp4">
+                您的浏览器不支持视频播放
+            </video>
+        </div>
+        <div class="controls">
+            <button class="text-white" id="playBtn">▶</button>
+            <div class="progress-container">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+            <div class="text-white text-sm" id="currentTime">0:00</div>
+            <button class="text-white" id="fullscreenBtn">⛶</button>
+        </div>
+    </div>
+
+    <!-- 章节目录 -->
+    <div class="catalog-container">
+        <h2 class="text-xl font-bold mb-4">课程目录</h2>
+        <div class="chapter-list" id="chapterList">
+            <!-- 动态加载章节 -->
+        </div>
+    </div>
+
+    <script>
+        let processedChapters = []; // 存储处理后的章节数据
+        const serial = {$Serial};
+        const video = document.getElementById('videoPlayer');
+        const chapterList = document.getElementById('chapterList');
+
+        // 初始化播放器
+        async function initPlayer(serial) {
+            video.src = `/sections/streamvideo?serial=${serial}`;
+            document.getElementById('taskName').textContent = findTaskName(serial);
+            try {
+                await video.play();
+            } catch (error) {
+                console.log('自动播放被阻止:', error);
+            }
+        }
+
+        document.querySelectorAll('.chapter-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const serial = item.dataset.serial;
+                if (serial) {
+                    initPlayer(serial);
+                    // 如果是任务项则发送请求
+                    if (item.classList.contains('task')) {
+                        fetch(`/sections/addTaskFile?serial=${serial}`)
+                            .then(res => res.json())
+                            .then(data => console.log('任务添加成功:', data))
+                            .catch(console.error);
+                    }
+                }
+            });
+        });
+        document.getElementById('deleteBtn').addEventListener('click', () => {
+            const serial = new URL(video.src).searchParams.get('serial');
+            if (confirm('确定要删除当前任务吗？')) {
+                fetch(`/sections/DeleteTaskFile?serial=${serial}`, {
+                    method: 'POST'
+                }).then(res => {
+                    if (res.ok) {
+                        alert('删除成功！');
+                        location.reload();
+                    }
+                }).catch(console.error);
+            }
+        });
+        // 加载章节数据
+        async function loadChapters() {
+            try {
+                const response = await fetch('/section/showSection');
+                const data = await response.json();
+                renderChapters(data.Index || []);
+                if(data.Index?.length) initPlayer(data.Index[0][0]);
+            } catch (error) {
+                console.error('加载章节失败:', error);
+            }
+        }
+        // 数据结构处理函数
+        function processSections(sections) {
+            return sections
+                .sort((a, b) => {
+                    // 将编号转换为数字进行比较
+                    const numA = parseFloat(a[0])
+                    const numB = parseFloat(b[0])
+                    return numA - numB
+                })
+                .reduce((acc, [number, name]) => {
+                    const isDir = Number.isInteger(parseFloat(number)) && !number.includes('.')
+                    
+                    if (isDir) {
+                        // 创建新目录
+                        acc.push({
+                            type: 'dir',
+                            number,
+                            name,
+                            tasks: []
+                        })
+                    } else {
+                        // 获取父目录编号
+                        const parentNum = Math.floor(parseFloat(number))
+                        const parent = acc.find(item => 
+                            item.type === 'dir' && item.number == parentNum
+                        )
+                        
+                        if (parent) {
+                            parent.tasks.push({
+                                type: 'task',
+                                number,
+                                name
+                            })
+                        }
+                    }
+                    return acc
+                }, [])
+        }
+        // 渲染章节列表
+        function renderChapters(sections) {
+            const processed = processSections(sections)
+            processedChapters = processed;
+            chapterList.innerHTML = processed.map(({ type, number, name, tasks }) => `
+                <div class="chapter-item dir" data-serial="${number}">
+                    <div class="flex items-center">
+                        <div class="chapter-number">${number}</div>
+                        <div>${name}</div>
+                    </div>
+                    ${tasks.map(task => `
+                        <div class="chapter-item task" data-serial="${task.number}">
+                            <div class="flex items-center">
+                                <div class="task-number">${task.number}</div>
+                                <div>${task.name}</div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `).join('')
+            // 添加点击事件
+            document.querySelectorAll('.chapter-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const serial = item.dataset.serial;
+                    if(serial) initPlayer(serial);
+                });
+            });
+        }
+        // 查找任务名称的函数
+        function findTaskName(serial) {
+            for (const chapter of processedChapters) {
+                if (chapter.number === serial) return chapter.name;
+                for (const task of chapter.tasks) {
+                    if (task.number === serial) return task.name;
+                }
+            }
+            return "当前任务";
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            loadChapters();
+            
+            // 视频控制逻辑
+            const playBtn = document.getElementById('playBtn');
+            playBtn.addEventListener('click', () => {
+                video.paused ? video.play() : video.pause();
+                playBtn.textContent = video.paused ? '▶' : '⏸';
+            });
+
+            // 进度条更新
+            video.addEventListener('timeupdate', () => {
+                const progress = (video.currentTime / video.duration) * 100;
+                document.getElementById('progressBar').style.width = `${progress}%`;
+                document.getElementById('currentTime').textContent = 
+                    formatTime(video.currentTime);
+            });
+        });
+
+        // 时间格式化
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            seconds = Math.floor(seconds % 60);
+            return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+    </script>
+</body>
+</html>

@@ -1,27 +1,213 @@
-<!doctype html>
-<html>
-  <head>
-    <title>登录</title>
-  </head>
-  <body>
-    <h1>用户登录</h1>
-    {if isset($error)}
-    <div style="color: red">{$error}</div>
-    {/if}
-    <form action="/auth/checklogin" method="post">
-      <div>
-        <label>用户名：</label>
-        <input type="text" name="username" required />
-      </div>
-      <div>
-        <label>密码：</label>
-        <input type="password" name="password" required />
-      </div>
-      <div>
-        <button type="submit">登录</button>
-      </div>
-    </form>
-    <form action="/auth/register" method="get">
-      <button type="submit">注册</button>
-  </body>
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学习平台登录</title>
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #6c757d;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 1rem;
+        }
+
+        .auth-container {
+            background: white;
+            width: 100%;
+            max-width: 400px;
+            padding: 2.5rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .auth-container:hover {
+            transform: translateY(-5px);
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .auth-title {
+            font-size: 2rem;
+            color: #212529;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.5px;
+        }
+
+        .auth-form .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            color: #495057;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.875rem 1.25rem;
+            border: 2px solid #e9ecef;
+            border-radius: 0.75rem;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.15);
+        }
+
+        .alert-danger {
+            padding: 1rem;
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 0.5rem;
+            color: #721c24;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .alert-danger::before {
+            content: "!";
+            font-family: monospace;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            background: #dc3545;
+            color: white;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.875rem 1.5rem;
+            border: none;
+            border-radius: 0.75rem;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            background-color: #3650b5;
+            box-shadow: 0 5px 15px rgba(67, 97, 238, 0.3);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--secondary-color);
+            border: 2px solid #e9ecef;
+            margin-top: 1rem;
+            width: 100%;
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .auth-footer {
+            text-align: center;
+            margin-top: 2rem;
+            color: #6c757d;
+        }
+
+        .auth-footer a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        @media (max-width: 480px) {
+            .auth-container {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-header">
+            <h1 class="auth-title">欢迎回来</h1>
+            <p>请登录您的账户</p>
+        </div>
+
+        {if isset($error)}
+        <div class="alert-danger">
+            <div>{$error}</div>
+        </div>
+        {/if}
+
+        <form class="auth-form" action="/auth/checklogin" method="post">
+            <div class="form-group">
+                <label class="form-label" for="userid">用户ID</label>
+                <input 
+                    type="text" 
+                    id="userid" 
+                    name="userid" 
+                    class="form-control" 
+                    placeholder="请输入您的用户ID" 
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="password">密码</label>
+                <input 
+                    type="password" 
+                    id="password" 
+                    name="password" 
+                    class="form-control" 
+                    placeholder="请输入密码" 
+                    required
+                >
+            </div>
+
+            <button type="submit" class="btn btn-primary">立即登录</button>
+        </form>
+
+        <div class="auth-footer">
+            <p>还没有账户？</p>
+            <a href="/auth/register" class="btn btn-secondary">创建新账户</a>
+        </div>
+    </div>
+</body>
 </html>

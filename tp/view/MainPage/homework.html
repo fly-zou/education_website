@@ -2,72 +2,307 @@
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale = 1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>作业展示</title>
     <style>
-      body {
-        font-family: Arial, sans-serif;
-        margin: 20px;
+      /* 新增提交人数样式 */
+      .submitted-count {
+        font-size: 0.9em;
+        color: #17a2b8;
+        margin-left: 15px;
+      }
+      .assignment-details {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .status-container {
+        display: flex;
+        align-items: center;
+      }
+    /* 新增作业项点击样式 */
+      .assignment {
+        cursor: pointer;
+        transition: all 0.2s;
+        padding: 15px;
+        margin: 10px 0;
+        border-radius: 8px;
+        background: white;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
       }
 
-      .class-name {
-        font-size: 20px;
-        font-weight: bold;
-        margin-bottom: 10px;
+      .assignment:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        background: #f8f9fa;
       }
 
-      .filter {
+      /* 保持原有样式 */
+      .expired {
+        background: #f0f0f0 !important;
+        color: #999 !important;
+      }
+      /* 原有样式保持不变 */
+      .expired {
+        background: #f0f0f0 !important;
+        color: #999 !important;
+      }
+      /* 调整原有样式 */
+      .assignment-status {
+        font-weight: 500;
+      }
+      .expired .assignment-status {
+        color: #dc3545 !important;
+      }
+      .time-remaining {
+        font-size: 0.9em;
+        color: #28a745;
+      }
+      .filter-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: white;
+        padding: 15px 25px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         margin-bottom: 20px;
       }
 
-      .filter label {
-        margin-right: 10px;
-      }
-
-      .assignment {
+      .filter-group {
         display: flex;
-        align-items: start;
-        margin-bottom: 15px;
+        align-items: center;
+        gap: 15px;
       }
 
-      .assignment-type {
-        background-color: #ccc;
+      /* 修改后的新建按钮样式 */
+      .create-btn {
+        padding: 10px 20px;
+        background: #28a745;
         color: white;
-        padding: 5px 10px;
-        margin-right: 10px;
+        border: none;
+        border-radius: 20px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.3s;
+        box-shadow: 0 2px 4px rgba(40,167,69,0.2);
+        display: flex;
+        align-items: center;
+        gap: 8px;
       }
 
-      .assignment-details {
-        flex: 1;
+      .create-btn:hover {
+        background: #218838;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 6px rgba(40,167,69,0.3);
       }
 
-      .assignment-status {
-        color: #007bff;
-        margin-right: 10px;
+      .create-btn::before {
+        content: "+";
+        font-size: 1.2em;
+        font-weight: bold;
       }
 
-      .analysis-link {
-        color: #007bff;
-        text-decoration: underline;
+      /* 调整单选按钮间距 */
+      .filter input[type="radio"] + label {
+        margin-left: 8px;
       }
     </style>
   </head>
 
   <body>
-    <div class="class-name">班级-01</div>
-    <div class="filter">
-      <label>筛选</label>
-      <input type="radio" name="filter" value="all" checked />全部
-      <input type="radio" name="filter" value="completed" />已完成
-      <input type="radio" name="filter" value="incomplete" />未完成
-    </div>
-    <div class="assignment">
-      <div class="assignment-type">作业</div>
-      <div class="assignment-details">
-        <div>算法</div>
-        <div class="assignment-status">已完成</div>
-        <a href="#" class="analysis-link">数据结构</a>
+    <div class="filter-container">
+      <div class="filter-group">
+        <span>作业筛选：</span>
+        <div class="filter">
+          <input type="radio" name="filter" value="all" id="filterAll" checked />
+          <label for="filterAll">全部</label>
+          <input type="radio" name="filter" value="published" id="filterPublished" />
+          <label for="filterPublished">已发布</label>
+          <input type="radio" name="filter" value="unpublished" id="filterUnpublished" />
+          <label for="filterUnpublished">未发布</label>
+        </div>
       </div>
+      <form action='/home/homeworks/createhomework' method='get' target="_top">
+        <button class="create-btn" onclick="showCreateModal()">新建作业</button>
+      </form>
     </div>
+    <div id="assignmentsContainer" class="assignments-container"></div>
+    <script>
+      let homeworks = [];
+      let updateInterval;
+      let currentFilter = 'all';
+      // 修改后的作业点击处理
+      function handleAssignmentClick(element) {
+        const title = element.dataset.title;
+        const isPublished = element.dataset.published === 'true';
+        const basePath = isPublished ? '/homework/detail' : '/homework/edit';
+        window.location.href = `${basePath}?title=${encodeURIComponent(title)}`;
+      }
+
+      // 初始化时获取当前筛选状态
+      document.addEventListener('DOMContentLoaded', () => {
+        currentFilter = document.querySelector('input[name="filter"]:checked').value;
+        fetchHomeworks();
+        addFilterListeners();
+      });
+      // 修改后的数据获取方法
+      async function fetchHomeworks() {
+        try {
+          const response = await fetch('/home/homeworks/gethomework');
+          const data = await response.json();
+          
+          if (data.code === 200) {
+            // 转换数据格式并添加published属性
+            homeworks = data.homework.map(hw => ({
+              ...hw,
+              title: hw.title,
+              deadline: new Date(hw.deadline),
+              submittedCount: hw.submittedCount || 0,
+              published: hw.action === 'publish' // 根据action字段判断发布状态
+            }));
+            
+            filterAndRender();
+            startAutoUpdate();
+          }
+        } catch (error) {
+          console.error('获取作业列表失败:', error);
+        }
+      }
+      // 计算剩余时间
+      function calculateRemainingTime(endTime) {
+        const now = new Date();
+        const diff = endTime - now;
+        
+        if (diff <= 0) return { expired: true };
+
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+        return {
+          days,
+          hours,
+          minutes,
+          seconds,
+          expired: false
+        };
+      }
+
+      // 渲染作业列表
+      function renderHomeworks(data) {
+        const container = document.getElementById('assignmentsContainer');
+        container.innerHTML = data.map(hw => {
+          let timeInfo = null;
+          let isExpired = false;
+
+          // 仅处理已发布作业的过期时间
+          if (hw.published) {
+            timeInfo = calculateRemainingTime(hw.deadline);
+            isExpired = timeInfo.expired;
+          }
+
+          return `
+            <div class="assignment ${hw.published && isExpired ? 'expired' : ''}"
+                 onclick="handleAssignmentClick(this)"
+                 data-title="${hw.title.replace(/"/g, '&quot;')}"
+                 data-published="${hw.published}">
+              <div class="assignment-details">
+                <h3>${hw.title}</h3>
+                <div class="status-container">
+                  <span class="assignment-status">
+                    ${hw.published ? '已发布' : '未发布'}
+                    ${hw.published && isExpired ? '<span style="margin-left:8px">(已过期)</span>' : ''}
+                  </span>
+                  ${hw.published && !isExpired ? `
+                    <span class="time-remaining">
+                      (剩余 ${timeInfo.days}天 ${timeInfo.hours}小时 ${timeInfo.minutes}分)
+                    </span>
+                  ` : ''}
+                  <span class="submitted-count">
+                    已提交：${hw.submittedCount}人
+                  </span>
+                  ${hw.published ? `
+                    <button onclick="cancelHomework('${hw.title}'); event.stopPropagation();">过期作业</button>
+                  ` : `
+                    <button onclick="deleteHomework('${hw.title}'); event.stopPropagation();">删除作业</button>
+                  `}
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      // 改进的筛选逻辑
+      function addFilterListeners() {
+        document.querySelectorAll('input[name="filter"]').forEach(radio => {
+          radio.addEventListener('change', (e) => {
+            currentFilter = e.target.value;
+            filterAndRender();
+          });
+        });
+      }
+
+      // 带过滤条件的自动更新
+      function startAutoUpdate() {
+        if (updateInterval) clearInterval(updateInterval);
+        updateInterval = setInterval(fetchHomeworks, 1000);
+      }
+      function filterAndRender() {
+        let filtered = homeworks;
+        switch(currentFilter) {
+          case 'published':
+            filtered = homeworks.filter(hw => hw.published);
+            break;
+          case 'unpublished':
+            filtered = homeworks.filter(hw => !hw.published);
+            break;
+        }
+        renderHomeworks(filtered);
+      }
+
+      async function deleteHomework(title) {
+        try {
+          const response = await fetch('/homework/deletehomework', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ title })
+          });
+          const data = await response.json();
+          if (data.code === 200) {
+            fetchHomeworks();
+          } else {
+            console.error('删除作业失败:', data.message);
+          }
+        } catch (error) {
+          console.error('删除作业请求出错:', error);
+        }
+      }
+
+      async function cancelHomework(title) {
+        try {
+          const response = await fetch('/homework/cancelhomework', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ title })
+          });
+          const data = await response.json();
+          if (data.code === 200) {
+            fetchHomeworks();
+          } else {
+            console.error('让作业过期失败:', data.message);
+          }
+        } catch (error) {
+          console.error('让作业过期请求出错:', error);
+        }
+      }
+    </script>
   </body>
 </html>
+    

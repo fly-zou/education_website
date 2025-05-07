@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>作业批改系统</title>
+    <style>
+        :root {
+            --primary-color: #4A90E2;
+            --success-color: #50C97D;
+            --error-color: #FF6B6B;
+            --background-color: #F8F9FA;
+            --text-color: #2D3436;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .back-arrow {
+            font-size: 24px;
+            cursor: pointer;
+            padding: 8px 16px;
+            transition: all 0.2s;
+        }
+
+        .back-arrow:hover {
+            color: var(--primary-color);
+        }
+
+        .title-container {
+            flex: 1;
+            text-align: center;
+        }
+
+        .action-buttons button {
+            margin-left: 15px;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        #btnSubmitGrading {
+            background: var(--success-color) !important;
+            color: white;
+        }
+
+        #btnSubmitGrading:hover {
+            filter: brightness(0.9);
+        }
+
+        .question-creator {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .question-card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            position: relative;
+        }
+
+        .score-input {
+            position: absolute;
+            top: 24px;
+            right: 24px;
+            width: 100px;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.2s;
+        }
+
+        .score-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+            outline: none;
+        }
+
+        .score-input.error {
+            border-color: var(--error-color);
+        }
+
+        .question-content {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+        }
+
+        .option-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .option-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .comment-box {
+            margin-top: 1.5rem;
+        }
+
+        .comment-textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            min-height: 100px;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .comment-textarea:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+        }
+
+        .error-message {
+            color: var(--error-color);
+            margin-top: 1rem;
+            font-size: 14px;
+            display: none;
+        }
+
+        /* 隐藏数字输入框的上下箭头 */
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+        #btnAutoCorrect {
+            background: var(--primary-color) !important;
+            margin-right: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="back-arrow" onclick="history.back()">←</div>
+        <div class="title-container">
+            <h2 id="assignmentTitle"></h2>
+        </div>
+        <div class="action-buttons">
+            <button id="btnAutoCorrect" onclick="autoCorrect()">🤖 一键批改</button>
+            <button id="btnSubmitGrading" onclick="submitGrading()">提交批改</button>
+        </div>
+    </div>
+
+    <div class="question-creator">
+        <div id="questionsContainer"></div>
+    </div>
+
+    <script>
+        // 初始化时加载学生答案
+        var student_id = '';
+        document.addEventListener('DOMContentLoaded', async () => {
+            const homeworkData = {
+                title: "{$title}",
+                questions: <?php echo json_encode($content); ?>,
+                answers: <?php echo json_encode($answers); ?>
+            };
+            student_id = "{$id}"
+
+            document.getElementById('assignmentTitle').textContent = homeworkData.title;
+
+            if (Array.isArray(homeworkData.questions)) {
+                homeworkData.questions.forEach((q, index) => {
+                    createQuestionCard(q, index, homeworkData.answers[index]);
+                });
+            }
+        });
+
+        // 创建题目卡片（老师批改版）
+        function createQuestionCard(question, index, answer) {
+            const questionCard = document.createElement('div');
+            questionCard.className = 'question-card';
+            questionCard.dataset.index = index;
+            questionCard.dataset.type = question.type;
+            
+            const scoreInput = document.createElement('input');
+            scoreInput.type = 'number';
+            scoreInput.className = 'score-input';
+            scoreInput.name = `score${index}`;
+            scoreInput.min = 0;
+            scoreInput.max = question.fullMark || 100;
+            scoreInput.placeholder = '请输入分数';
+            scoreInput.value = question.score || '';
+            
+            questionCard.appendChild(scoreInput);
+
+            let optionsHTML = '';
+            let answerStatus = '';
+
+            if (question.type === 'single') {
+                optionsHTML = question.options.map((opt, i) => `
+                    <label class="option-item">
+                        <input type="radio" name="q${index}" value="${i}" 
+                               ${i == answer ? 'checked' : ''} disabled>
+                        ${opt}
+                    </label>
+                `).join('');
+            } else if (question.type === 'multiple') {
+                const answers = answer?.split(',') || [];
+                optionsHTML = question.options.map((opt, i) => `
+                    <label class="option-item">
+                        <input type="checkbox" name="q${index}" value="${i}" 
+                               ${answers.includes(String(i)) ? 'checked' : ''} disabled>
+                        ${opt}
+                    </label>
+                `).join('');
+            } else {
+                optionsHTML = `
+                    <input type="text" class="blank-input" 
+                           value="${answer || ''}" 
+                           readonly>
+                `;
+            }
+
+            answerStatus = answer ? 
+                `<div class="answer-status">学生答案已提交</div>` :
+                `<div class="answer-status empty">未作答</div>`;
+
+            const content = document.createElement('div');
+            content.innerHTML = `
+                <div class="question-content">${index + 1}. ${question.content}</div>
+                <div class="option-list">${optionsHTML}</div>
+                ${answerStatus}
+                <div class="comment-box">
+                    <textarea class="comment-textarea" 
+                              name="comment${index}" 
+                              placeholder="请输入批注...">${question.comment || ''}</textarea>
+                </div>
+                <div class="error-message">请先填写本题分数</div>
+            `;
+
+            questionCard.appendChild(content);
+            document.getElementById('questionsContainer').appendChild(questionCard);
+        }
+
+        // 验证表单
+        function validateForm() {
+            let isValid = true;
+            const scoreInputs = document.querySelectorAll('.score-input');
+            
+            scoreInputs.forEach(input => {
+                const errorMessage = input.closest('.question-card').querySelector('.error-message');
+                const value = Number(input.value);
+                const maxvalue = Number(input.max);
+                if ((!value && value !== 0) || value < 0 || value > input.max) {
+                    isValid = false;
+                    input.classList.add('error');
+                    errorMessage.style.display = 'block';
+                } else {
+                    input.classList.remove('error');
+                    errorMessage.style.display = 'none';
+                }
+            });
+
+            if (!isValid) {
+                const firstError = document.querySelector('.error');
+                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                firstError.focus();
+            }
+
+            return isValid;
+        }
+
+        // 提交批改
+        async function submitGrading() {
+            if (!validateForm()) {
+                showToast('请填写所有题目的分数', 'error');
+                return;
+            }
+
+            const toast = showToast('正在提交批改...');
+            
+            try {
+                const gradingData = collectGradingData();
+                const teachergrade = {
+                    title: "{$title}",
+                    grading: gradingData,
+                    student_id: student_id
+                };
+
+                const response = await fetch('/homework/TeacherGrade', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({teachergrade: teachergrade})
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    showToast('✓ 批改提交成功', 'success');
+                } else {
+                    throw new Error(result.message || '提交失败');
+                }
+            } catch (error) {
+                showToast(`⚠ 提交失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 收集批改数据
+        function collectGradingData() {
+            return Array.from(document.querySelectorAll('.question-card')).map(card => {
+                const index = card.dataset.index;
+                return {
+                    score: card.querySelector(`.score-input`).value,
+                    comment: card.querySelector(`.comment-textarea`).value
+                };
+            });
+        }
+
+        // 显示提示信息
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.textContent = message;
+            toast.style = `
+                position: fixed;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                padding: 12px 24px;
+                border-radius: 8px;
+                background: ${type === 'error' ? 'var(--error-color)' : 
+                          type === 'success' ? 'var(--success-color)' : '#333'};
+                color: white;
+                font-weight: 500;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                z-index: 1000;
+            `;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2000);
+            return toast;
+        }
+          // 新增一键批改功能
+        async function autoCorrect() {
+            const toast = showToast('正在启动AI批改...');
+            
+            try {
+                const workdetail = {
+                    title: "{$title}",
+                    student_id: student_id
+                };
+                const response = await fetch('/homework/AIcorrectHomework', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({workdetail: workdetail})
+                });
+
+                const result = await response.json();
+                if (result.code !== 200) {
+                    throw new Error(result.message || 'AI批改失败');
+                }
+
+                // 填充批改结果
+                fillCorrectResult(result);
+              showToast('✓ AI批改完成', 'success');
+          } catch (error) {
+              showToast(`⚠ 批改失败: ${error.message}`, 'error');
+          }
+      }
+
+      // 填充批改结果的函数
+      function fillCorrectResult(result) {
+          const questionCards = document.querySelectorAll('.question-card');
+          
+          questionCards.forEach((card, index) => {
+              // 填充分数
+              const scoreInput = card.querySelector('.score-input');
+              if (result.score[index] !== undefined) {
+                  scoreInput.value = result.score[index];
+                  scoreInput.classList.remove('error');
+              }
+
+              // 填充评语
+              const commentArea = card.querySelector('.comment-textarea');
+              if (result.comment[index]) {
+                  commentArea.value = result.comment[index];
+              }
+          });
+
+          // 自动滚动到第一个题目
+          questionCards[0].scrollIntoView({
+              behavior: 'smooth',
+              block: 'start'
+          });
+      }
+    </script>
+</body>
+</html>

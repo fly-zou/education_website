@@ -1,90 +1,143 @@
 <!doctype html>
 <html lang="zh-CN">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>首页</title>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        display: flex;
-        flex-direction: column;
-        margin: 0;
-        padding: 0;
-        min-height: 100vh;
-      }
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>智能学习平台</title>
+<style>
+/* 全局样式 */
+:root {
+  --primary-color: #007bff;
+  --hover-color: #0056b3;
+}
 
-      h1 {
-        text-align: center;
-        padding: 20px;
-        margin: 0;
-      }
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: #f8f9fa;
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
 
-      .main-content {
-        display: flex;
-        flex: 1;
-      }
+/* 标题栏 */
+h1 {
+  background: linear-gradient(90deg, var(--primary-color), #00c3ff);
+  color: white;
+  padding: 25px 0;
+  margin: 0;
+  text-align: center;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  font-size: 2.2rem;
+}
 
-      .left {
-        width: 20%;
-        background-color: #f4f4f4;
-        padding: 20px;
-      }
+/* 主内容区 */
+.main-content {
+  flex: 1;
+  display: flex;
+  gap: 20px;
+  padding: 20px;
+}
 
-      .right {
-        width: 80%;
-        padding: 20px;
-      }
+/* 左侧导航 */
+.left {
+  width: 280px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+  padding: 15px;
+}
 
-      .right iframe {
-        width: 100%;
-        height: 100%;
-        border: none;
-      }
+ul#pages {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
 
-      ul#pages {
-        list-style-type: none;
-        padding: 0;
-        height: 100%;
-        overflow-y: auto;
-      }
+ul#pages span {
+  display: block;
+  padding: 14px;
+  margin: 8px 0;
+  border-radius: 8px;
+  color: #444;
+  cursor: pointer;
+  transition: all 0.3s;
+}
 
-      ul#pages span {
-        display: block;
-        padding: 10px;
-        cursor: pointer;
-        border-bottom: 1px solid #ccc;
-      }
+ul#pages span:hover {
+  background: #e9ecef;
+  transform: translateX(8px);
+}
 
-      ul#pages span:hover {
-        background-color: #ddd;
-      }
-    </style>
-  </head>
+ul#pages span[active] {
+  background: var(--primary-color)!important;
+  color: white;
+}
 
-  <body>
-    <h1>欢迎{$user_name}</h1>
-    <div class="main-content">
-      <div class="left">
-        <ul id="pages">
-          {foreach $pages as $url => $name}
-          <span value="{$url}">{$name}</span>
-          {/foreach}
-        </ul>
-      </div>
-      <div class="right">
-        <iframe src="/home/AI">AI助手</iframe>
-      </div>
-    </div>
-    <script>
-      const pageSelector = document.getElementById("pages");
-      const contentFrame = document.querySelector(".right iframe");
-      pageSelector.addEventListener("click", (e) => {
-        const url = e.target.getAttribute("value");
-        if (url) {
-          contentFrame.src = url;
-        }
-      });
-    </script>
-  </body>
+/* 右侧内容区 */
+.right {
+  flex: 1;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+.right iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  border-radius: 8px;
+}
+
+/* 响应式适配 */
+@media (max-width: 768px) {
+  .main-content {
+    flex-direction: column;
+    padding: 10px;
+  }
+  
+  .left {
+    width: auto;
+    margin-bottom: 15px;
+  }
+  
+  ul#pages span:hover {
+    transform: none;
+  }
+}
+</style>
+</head>
+
+<body>
+<h1>欢迎{$user_name}</h1>
+<div class="main-content">
+  <div class="left">
+    <ul id="pages">
+      {foreach $pages as $url => $name}
+      <span value="{$url}">{$name}</span>
+      {/foreach}
+    </ul>
+  </div>
+  <div class="right">
+    <iframe src="/home/AI"></iframe>
+  </div>
+</div>
+
+<script>
+// 导航交互增强
+const navItems = document.querySelectorAll('#pages span');
+const contentFrame = document.querySelector('iframe');
+
+navItems.forEach(item => {
+  item.addEventListener('click', () => {
+    // 移除所有active状态
+    navItems.forEach(el => el.removeAttribute('active'));
+    // 设置当前选中项
+    item.setAttribute('active', '');
+    // 更新iframe内容
+    contentFrame.src = item.getAttribute('value');
+  });
+});
+</script>
+</body>
 </html>

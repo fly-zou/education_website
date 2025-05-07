@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <title>智能作业创建系统</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+       .header {
+            display: flex;
+            align-items: center;
+            padding: 15px 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+       .back-arrow {
+            font-size: 24px;
+            margin-right: 20px;
+            cursor: pointer;
+        }
+
+       .deadline-container {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+       .question-creator {
+            max-width: 800px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+       .question-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            position: relative;
+        }
+
+       .type-selector {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+       .type-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 20px;
+            border: 1px solid #007bff;
+        }
+
+       .type-item.active {
+            background: #007bff;
+            color: white;
+        }
+
+       .option-list {
+            margin: 15px 0;
+            counter-reset: option-counter;
+        }
+
+       .option-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            position: relative;
+        }
+
+       .option-item::before {
+            counter-increment: option-counter;
+            content: counter(option-counter, upper-alpha);
+            width: 24px;
+            text-align: center;
+            margin-right: 10px;
+            font-weight: bold;
+            color: #666;
+        }
+
+       .add-option-btn {
+            margin-top: 10px;
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        #createQuestionBtn {
+            width: 100%;
+            padding: 12px;
+            background: #17a2b8;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 20px 0;
+        }
+
+       .answer-box {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+
+       .fixed-bottom-btn {
+            position: sticky;
+            bottom: 20px;
+            z-index: 100;
+        }
+
+       .action-buttons {
+            margin-top: 30px;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+       .action-btn {
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            color: white;
+            border: none;
+            transition: opacity 0.3s;
+        }
+
+       .action-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+       .header {
+            display: flex;
+            align-items: center;
+            padding: 15px 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+       .title-input {
+            flex: 1;
+            min-width: 300px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+       .delete-question-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        /* 新增分数输入相关样式 */
+        .score-container {
+            position: absolute;
+            top: 10px;
+            right: 100px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .score-input {
+            width: 60px;
+            padding: 6px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .score-label {
+            font-size: 14px;
+            color: #666;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <div class="back-arrow" onclick="history.back()">←</div>
+        <input type="text"
+            id="assignmentTitle"
+            class="title-input"
+            placeholder="请输入作业标题"
+            required>
+        <div class="deadline-container">
+            <label>截止时间：</label>
+            <input type="datetime-local"
+                id="deadline"
+                required
+                style="padding: 8px; border-radius: 4px;">
+        </div>
+    </div>
+    <div class="question-creator">
+        <div id="questionsContainer">
+            <!-- 初始添加按钮 -->
+            <button id="createQuestionBtn" class="fixed-bottom-btn" onclick="createNewQuestion()">＋ 添加新题目</button>
+        </div>
+
+        <div class="action-buttons">
+            <button class="action-btn" style="background: #6c757d" onclick="handleSave()" id="saveBtn">💾 保存草稿</button>
+            <button class="action-btn" id="generateBtn" onclick="handleGenerateAnswers()">✨ 生成答案</button>
+            <button class="action-btn" style="background: #28a745" onclick="handlePublish()" id="publishBtn">🚀 发布作业</button>
+        </div>
+    </div>
+
+    <script>
+        let questionCounter = 0;
+        let isSubmitting = false;
+
+        // 创建新题目
+        function createNewQuestion() {
+            questionCounter++;
+            const questionId = `question_${questionCounter}`;
+
+            const questionCard = document.createElement('div');
+            questionCard.className = 'question-card';
+            questionCard.innerHTML = `
+                <div class="score-container">
+                    <span class="score-label">分值：</span>
+                    <input type="number" 
+                           class="score-input"
+                           min="0" 
+                           max="100"
+                           value="10"
+                           required>
+                </div>
+                <button class="delete-question-btn" onclick="deleteQuestion(this)">删除题目</button>
+                <div class="type-selector">
+                    <div class="type-item active" data-type="single" onclick="changeType(this, 'single')">
+                        <div class="type-dot"></div>
+                        单选题
+                    </div>
+                    <div class="type-item" data-type="multiple" onclick="changeType(this, 'multiple')">
+                        <div class="type-dot"></div>
+                        多选题
+                    </div>
+                    <div class="type-item" data-type="blank" onclick="changeType(this, 'blank')">
+                        <div class="type-dot"></div>
+                        填空题
+                    </div>
+                </div>
+
+                <textarea class="question-content"
+                    placeholder="请输入题目内容..."
+                    required
+                    style="width: 100%; height: 100px; padding: 10px;"></textarea>
+
+                <div class="option-list">
+                    ${createDefaultOptions('single')}
+                </div>
+
+                <button class="add-option-btn" onclick="addOption(this)">＋ 添加选项</button>
+
+                <div class="answer-box">
+                    <label>正确答案：</label>
+                    <input type="text"
+                        class="answer-input"
+                        placeholder="${getAnswerPlaceholder('single')}"
+                        style="width: 100%; padding: 8px;">
+                </div>
+            `;
+
+            // 将新题目插入到添加按钮之前
+            const container = document.getElementById('questionsContainer');
+            const addButton = document.getElementById('createQuestionBtn');
+            container.insertBefore(questionCard, addButton);
+        }
+
+        async function handleGenerateAnswers() {
+            if (isSubmitting) return;
+            isSubmitting = true;
+
+            // 验证题目完整性
+            if (!validateForGeneration()) {
+                isSubmitting = false;
+                return;
+            }
+
+            // 收集题目数据
+            const questionsData = collectData('save');
+            
+            try {
+                // 发送生成请求
+                const response = await fetch('/homework/GenerateAnswers', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({questionsData:questionsData})
+                });
+
+                if (!response.ok) throw new Error('生成失败');
+                const answers = await response.json();
+
+                // 填充答案
+                if (answers['code'] == 200){
+                  fillAnswers(answers['answers']);
+                  alert('答案生成成功！');
+                }
+                else{
+                  alert('答案生成失败！');
+                }
+            } catch (error) {
+                console.error('生成失败:', error);
+                alert('答案生成失败，请检查网络后重试');
+            }
+
+            isSubmitting = false;
+        }
+
+        function fillAnswers(answers) {
+            document.querySelectorAll('.question-card').forEach((card, index) => {
+                const type = card.querySelector('.active').dataset.type;
+                const answerInput = card.querySelector('.answer-input');
+                
+                if (answers[index]) {
+                    answerInput.value = type === 'multiple' 
+                        ? answers[index].join(',') 
+                        : answers[index];
+                }
+            });
+        }
+
+        function validateForGeneration() {
+            let isValid = true;
+            document.querySelectorAll('.question-card').forEach((card, index) => {
+                // 验证题目内容
+                if (!card.querySelector('.question-content').value.trim()) {
+                    alert(`第 ${index + 1} 题未填写题目内容`);
+                    isValid = false;
+                }
+
+                // 验证选择题选项
+                if (!card.querySelector('.active').dataset.type.includes('blank')) {
+                    card.querySelectorAll('.option-item input').forEach((input, optIndex) => {
+                        if (!input.value.trim()) {
+                            alert(`第 ${index + 1} 题的第 ${String.fromCharCode(65 + optIndex)} 选项未填写`);
+                            isValid = false;
+                        }
+                    });
+                }
+            });
+            return isValid;
+        }
+
+        // 删除题目
+        function deleteQuestion(button) {
+            const questionCard = button.closest('.question-card');
+            questionCard.remove();
+        }
+
+        // 获取答案输入提示
+        function getAnswerPlaceholder(type) {
+            const placeholders = {
+                single: "输入单选答案（如：A）",
+                multiple: "输入多选答案（如：A,B）",
+                blank: "输入填空答案（多个答案用逗号分隔）"
+            };
+            return placeholders[type] || "输入答案";
+        }
+
+        // 切换题目类型
+        function changeType(element, type) {
+            const card = element.closest('.question-card');
+            card.querySelectorAll('.type-item').forEach(item => item.classList.remove('active'));
+            element.classList.add('active');
+
+            const optionList = card.querySelector('.option-list');
+            const addBtn = card.querySelector('.add-option-btn');
+            const answerInput = card.querySelector('.answer-input');
+
+            if (type === 'blank') {
+                optionList.style.display = 'none';
+                addBtn.style.display = 'none';
+                answerInput.placeholder = getAnswerPlaceholder('blank');
+            } else {
+                optionList.style.display = 'block';
+                addBtn.style.display = 'block';
+                answerInput.placeholder = getAnswerPlaceholder(type);
+            }
+        }
+
+        // 创建默认选项
+        function createDefaultOptions(type) {
+            const letters = ['A', 'B', 'C', 'D'];
+            return letters.map(letter => `
+                <div class="option-item">
+                    <input type="text"
+                        placeholder="选项 ${letter}"
+                        required
+                        style="flex:1; padding:8px;">
+                    <button onclick="this.parentElement.remove()"
+                        style="margin-left:10px; color:#dc3545">删除</button>
+                </div>
+            `).join('');
+        }
+
+        // 添加选项
+        function addOption(button) {
+            const optionList = button.previousElementSibling;
+            const newOption = document.createElement('div');
+            newOption.className = 'option-item';
+            newOption.innerHTML = `
+                <input type="text"
+                    placeholder="选项内容"
+                    required
+                    style="flex:1; padding:8px;">
+                <button onclick="this.parentElement.remove()"
+                    style="margin-left:10px; color:#dc3545">删除</button>
+            `;
+            optionList.appendChild(newOption);
+        }
+
+        function validateFormData(data) {
+            // 验证作业标题
+            if (!data.title) {
+                alert('请填写作业标题');
+                document.getElementById('assignmentTitle').focus();
+                return false;
+            }
+
+            // 验证截止时间
+            if (!data.deadline) {
+                alert('请设置截止时间');
+                document.getElementById('deadline').focus();
+                return false;
+            }
+
+            // 原有题目验证
+            if (data.questions.length === 0) {
+                alert('请至少添加一个题目');
+                return false;
+            }
+
+            for (const [index, question] of data.questions.entries()) {
+                if (!question.content.trim()) {
+                    alert(`第 ${index + 1} 题未填写题目内容`);
+                    return false;
+                }
+
+                if (question.type !== 'blank' && question.options.length < 2) {
+                    alert(`第 ${index + 1} 题需要至少两个选项`);
+                    return false;
+                }
+
+                // 新增答案验证（核心修改部分）
+                if (!question.answer.trim()) {
+                    alert(`第 ${index + 1} 题未填写答案`);
+                    // 聚焦到对应的答案输入框
+                    document.querySelectorAll('.answer-input')[index].focus();
+                    return false;
+                }
+
+                // 可选：验证选择题答案格式
+                if (question.type !== 'blank') {
+                    const validOptions = question.options.map((_, i) => String.fromCharCode(65 + i));
+                    const answers = question.answer.toUpperCase().split(',');
+                    
+                    if (answers.some(a => !validOptions.includes(a))) {
+                        alert(`第 ${index + 1} 题答案包含无效选项`);
+                        document.querySelectorAll('.answer-input')[index].focus();
+                        return false;
+                    }
+                }
+            }
+            // 新增分数验证
+            for (const [index, question] of data.questions.entries()) {
+                if (question.sumscore < 0 || question.sumscore > 100) {
+                    alert(`第 ${index + 1} 题分数值无效（0-100）`);
+                    document.querySelectorAll('.score-input')[index].focus();
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        // 修改后的数据收集
+        function collectData(actionType) {
+            const questions = [];
+            document.querySelectorAll('.question-card').forEach(card => {
+                const type = card.querySelector('.active').dataset.type;
+                const question = {
+                    type: type,
+                    content: card.querySelector('.question-content').value.trim(),
+                    sumscore: parseInt(card.querySelector('.score-input').value) || 10, // 新增分数字段
+                    options: [],
+                    answer: card.querySelector('.answer-input').value.trim()
+                };
+
+                if (type !== 'blank') {
+                    card.querySelectorAll('.option-item input').forEach(opt => {
+                        question.options.push(opt.value.trim());
+                    });
+                }
+
+                questions.push(question);
+            });
+
+            return {
+                title: document.getElementById('assignmentTitle').value.trim(),
+                deadline: document.getElementById('deadline').value,
+                questions: questions,
+                action: actionType // 'save' 或 'publish'
+            };
+        }
+
+        // 提交数据示例（保持原有逻辑）
+        async function sendDataToBackend(data) {
+            console.log('提交数据：', data);
+            // 实际请求需要根据后端API调整
+            try {
+                const response = await fetch('/homeworks/savehomework', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ homework: data })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                alert(data.action === 'save' ? '保存成功！' : '发布成功！');
+                window.location.href = '/';
+            } catch (error) {
+                console.error('提交失败:', error);
+                alert('操作失败，请稍后重试');
+            }
+        }
+
+        // 修改后的处理函数
+        async function handleSave() {
+            if (isSubmitting) return;
+            isSubmitting = true;
+
+            const formData = collectData('save');
+            if (validateFormData(formData)) {
+                await sendDataToBackend(formData);
+            }
+            isSubmitting = false;
+        }
+
+        async function handlePublish() {
+            if (isSubmitting) return;
+            isSubmitting = true;
+
+            const formData = collectData('publish');
+            if (validateFormData(formData)) {
+                await sendDataToBackend(formData);
+            }
+            isSubmitting = false;
+        }
+    </script>
+</body>
+
+</html>    

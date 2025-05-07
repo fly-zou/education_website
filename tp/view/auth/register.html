@@ -1,122 +1,359 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="zh-CN">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>注册界面</title>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>注册账户</title>
     <style>
-      /* 整体表单样式 */
-      form {
-        width: 300px;
-        margin: 0 auto;
-        padding: 20px;
-        border: 1px solid #ccc;
-        border-radius: 5px;
-        background-color: #f9f9f9;
-      }
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #6c757d;
+            --success-color: #4BB543;
+            --error-color: #ff4444;
+            --transition: all 0.3s ease;
+        }
 
-      /* 输入框样式 */
-      input[type="text"],
-      input[type="password"],
-      select {
-        width: 100%;
-        padding: 10px;
-        margin-bottom: 15px;
-        border: 1px solid #ccc;
-        border-radius: 3px;
-      }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
 
-      /* 提交按钮样式 */
-      button[type="submit"] {
-        width: 100%;
-        padding: 10px;
-        background-color: #007bff;
-        color: white;
-        border: none;
-        border-radius: 3px;
-        cursor: pointer;
-      }
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 1rem;
+        }
 
-      /* 鼠标悬停在按钮上的样式 */
-      button[type="submit"]:hover {
-        background-color: #0056b3;
-      }
+        .auth-container {
+            background: white;
+            width: 100%;
+            max-width: 420px;
+            padding: 2rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transform: translateY(0);
+            transition: var(--transition);
+        }
 
-      /* 错误提示信息样式 */
-      #passwordError {
-        color: red;
-        margin-bottom: 10px;
-      }
+        .auth-container:hover {
+            transform: translateY(-5px);
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .auth-title {
+            font-size: 1.75rem;
+            color: #212529;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            color: #495057;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.875rem 1.25rem;
+            border: 2px solid #e9ecef;
+            border-radius: 0.75rem;
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.15);
+        }
+
+        .form-control::placeholder {
+            color: #adb5bd;
+        }
+
+        #passwordError {
+            color: var(--error-color);
+            background: #ffebee;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+            display: none;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        #passwordError::before {
+            content: "!";
+            font-family: monospace;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            background: var(--error-color);
+            color: white;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 0.875rem 1.5rem;
+            border: none;
+            border-radius: 0.75rem;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #3650b5;
+            box-shadow: 0 5px 15px rgba(67, 97, 238, 0.3);
+        }
+
+        /* 新增角色选择样式 */
+        .role-select {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+
+        #roleSelect {
+            appearance: none;
+            width: 100%;
+            padding: 0.875rem 1.25rem;
+            border: 2px solid #e9ecef;
+            border-radius: 0.75rem;
+            background: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234360ee' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e") no-repeat right 1rem center/16px;
+            cursor: pointer;
+        }
+
+        /* 教室号输入框动画 */
+        #classroomInput {
+            max-height: 0;
+            opacity: 0;
+            transition: all 0.3s ease;
+            margin-bottom: 0;
+        }
+
+        #classroomInput.visible {
+            max-height: 200px;
+            opacity: 1;
+            margin-bottom: 1.5rem;
+        }
+
+        /* 成功弹窗样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+            z-index: 1000;
+        }
+
+        .modal h3 {
+            color: var(--success-color);
+            margin-bottom: 1rem;
+        }
+
+        #userIdSpan {
+            font-weight: 600;
+            color: var(--primary-color);
+            font-size: 1.25rem;
+        }
+
+        .modal button {
+            margin-top: 1.5rem;
+            padding: 0.75rem 2rem;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .modal button:hover {
+            background: #3650b5;
+        }
+
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.3);
+            backdrop-filter: blur(2px);
+            z-index: 999;
+        }
     </style>
-  </head>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-header">
+            <h1 class="auth-title">创建新账户</h1>
+            <p>立即加入我们的学习平台</p>
+        </div>
 
-  <body>
-    <form action="/auth/doregister" method="post" id="registerForm">
-      <input type="text" name="username" placeholder="用户名" required />
-      <input
-        type="password"
-        name="password"
-        id="password"
-        placeholder="密码"
-        required
-      />
-      <input
-        type="password"
-        name="password2"
-        id="password2"
-        placeholder="确认密码"
-        required
-      />
-      <select name="role" id="roleSelect">
-        <option value="1">教师</option>
-        <option value="2">学生</option>
-      </select>
-      <!-- 教室号输入框 -->
-      <input
-        type="text"
-        name="classroom"
-        id="classroomInput"
-        placeholder="教室号"
-        style="display: none"
-      />
-      <!-- 密码错误提示信息 -->
-      <div id="passwordError"></div>
-      <button type="submit">注册</button>
-    </form>
+        <form id="registerForm">
+            <div class="form-group">
+                <input 
+                    type="text" 
+                    name="username" 
+                    class="form-control" 
+                    placeholder="用户名"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <input
+                    type="password"
+                    name="password"
+                    id="password"
+                    class="form-control"
+                    placeholder="密码"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <input
+                    type="password"
+                    name="password2"
+                    id="password2"
+                    class="form-control"
+                    placeholder="确认密码"
+                    required
+                >
+            </div>
+
+            <div class="role-select">
+                <select name="role" id="roleSelect">
+                    <option value="1">教师</option>
+                    <option value="2">学生</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <input
+                    type="text"
+                    name="classroom"
+                    id="classroomInput"
+                    class="form-control"
+                    placeholder="请输入班级代码"
+                >
+            </div>
+
+            <div id="passwordError"></div>
+
+            <button type="submit" class="btn btn-primary">立即注册</button>
+        </form>
+    </div>
+
+    <div class="overlay" id="overlay"></div>
+    <div id="successModal" class="modal">
+        <h3>🎉 注册成功！</h3>
+        <p>您的用户ID是：<span id="userIdSpan"></span></p>
+        <p style="color: #666;margin-top:0.5rem">请妥善保管此ID用于登录</p>
+        <button onclick="redirectToLogin()">前往登录</button>
+    </div>
 
     <script>
-      // 获取下拉框和教室号输入框的 DOM 元素
-      const roleSelect = document.getElementById("roleSelect");
-      const classroomInput = document.getElementById("classroomInput");
+        // 角色选择交互
+        const roleSelect = document.getElementById("roleSelect");
+        const classroomInput = document.getElementById("classroomInput");
 
-      // 监听下拉框的 change 事件
-      roleSelect.addEventListener("change", function () {
-        if (this.value === "2") {
-          // 如果选择的是学生，显示教室号输入框
-          classroomInput.style.display = "block";
-        } else {
-          // 如果选择的是教师，隐藏教室号输入框
-          classroomInput.style.display = "none";
+        roleSelect.addEventListener("change", function() {
+            if (this.value === "2") {
+                classroomInput.classList.add("visible");
+                classroomInput.required = true;
+            } else {
+                classroomInput.classList.remove("visible");
+                classroomInput.required = false;
+            }
+        });
+
+        // 表单验证
+        const registerForm = document.getElementById("registerForm");
+        const passwordError = document.getElementById("passwordError");
+
+        registerForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            
+            // 密码验证
+            const password = document.getElementById("password").value;
+            const password2 = document.getElementById("password2").value;
+            
+            if (password !== password2) {
+                passwordError.style.display = 'flex';
+                passwordError.textContent = '两次输入的密码不一致，请重新输入';
+                return;
+            } else {
+                passwordError.style.display = 'none';
+            }
+
+            // 提交表单
+            try {
+                const formData = new FormData(registerForm);
+                const response = await fetch('/auth/doregister', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.code === 200) {
+                    document.getElementById('overlay').style.display = 'block';
+                    document.getElementById('successModal').style.display = 'block';
+                    document.getElementById('userIdSpan').textContent = result.user_id;
+                } else {
+                    showError(result.msg || '注册失败，请重试');
+                }
+            } catch (error) {
+                showError('网络连接异常');
+                console.error('注册错误:', error);
+            }
+        });
+
+        function showError(message) {
+            passwordError.style.display = 'flex';
+            passwordError.textContent = message;
         }
-      });
 
-      // 获取表单、密码输入框和错误提示元素
-      const registerForm = document.getElementById("registerForm");
-      const passwordInput = document.getElementById("password");
-      const confirmPasswordInput = document.getElementById("password2");
-      const passwordError = document.getElementById("passwordError");
-
-      // 监听表单的提交事件
-      registerForm.addEventListener("submit", function (e) {
-        if (passwordInput.value !== confirmPasswordInput.value) {
-          // 如果两次密码输入不一致，阻止表单提交并显示错误信息
-          e.preventDefault();
-          passwordError.textContent = "两次输入的密码不一致，请重新输入。";
-        } else {
-          // 如果两次密码输入一致，清空错误信息
-          passwordError.textContent = "";
+        function redirectToLogin() {
+            window.location.href = '/auth/login';
         }
-      });
     </script>
-  </body>
+</body>
 </html>
