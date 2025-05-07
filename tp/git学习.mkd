@@ -1,0 +1,192 @@
+Git学习笔记整理：
+
+---
+
+### 一、Git核心概念
+
+1. **版本控制系统**：记录文件修改历史，支持版本回退和多人协作
+2. **三个重要区域**：
+   - **工作区** (Working Directory)：本地可见的目录
+   - **暂存区** (Stage/Index)：临时存放改动
+   - **仓库** (Repository)：存储所有版本记录
+3. **文件状态**：
+   - `Untracked`：未被Git管理的文件
+   - `Modified`：已修改但未暂存
+   - `Staged`：已暂存待提交
+   - `Committed`：已提交到本地仓库
+
+---
+
+### 二、Git配置
+
+```bash
+# 全局配置（首次安装必做）
+git config --global user.name "Your Name"
+git config --global user.email "email@example.com"
+git config --global core.editor vim  # 设置默认编辑器
+
+# 查看配置
+git config --list
+```
+
+---
+
+### 三、基础操作命令
+
+| 命令 | 作用 | 示例 |
+|------|------|------|
+| `git init` | 初始化仓库 | `git init` |
+| `git clone` | 克隆远程仓库 | `git clone https://github.com/user/repo.git` |
+| `git add` | 添加文件到暂存区 | `git add .`（添加全部）<br>`git add file.txt`（添加指定文件）|
+| `git commit` | 提交到本地仓库 | `git commit -m "提交说明"` |
+| `git status` | 查看状态 | `git status` |
+| `git log` | 查看提交历史 | `git log --oneline --graph`（简洁查看） |
+
+---
+
+### 四、分支管理
+
+1. **分支操作**：
+
+   ```bash
+   git branch              # 查看本地分支
+   git branch dev         # 创建新分支
+   git checkout dev       # 切换分支
+   git checkout -b dev    # 创建并切换分支
+   git merge dev          # 合并dev分支到当前分支
+   git branch -d dev      # 删除分支
+   ```
+
+2. **解决冲突**：
+   - 当合并出现冲突时，手动编辑文件中的`<<<<<<<`标记部分
+   - 解决后执行：
+
+     ```bash
+     git add .
+     git commit -m "解决合并冲突"
+     ```
+
+---
+
+### 五、远程仓库操作
+
+| 命令 | 说明 |
+|------|------|
+| `git remote add origin [url]` | 关联远程仓库 |
+| `git push -u origin main` | 首次推送并建立关联 |
+| `git push` | 推送本地提交到远程 |
+| `git pull` | 拉取远程更新（fetch + merge） |
+| `git fetch` | 仅获取远程更新不合并 |
+
+---
+
+### 六、撤销与回退
+
+```bash
+# 撤销工作区修改（危险操作！）
+git checkout -- file.txt
+
+# 撤销暂存区文件
+git reset HEAD file.txt
+
+# 回退到指定提交（保留工作区）
+git reset --soft commit_id
+
+# 彻底回退到指定提交（慎用！）
+git reset --hard commit_id
+
+# 找回误删的提交
+git reflog  # 查看所有操作记录
+```
+
+---
+
+### 七、实用技巧
+
+1. **.gitignore文件**：
+
+   ```text
+   # 忽略所有.class文件
+   *.class
+   # 不忽略lib目录下的.class文件
+   !lib/*.class
+   # 忽略logs目录
+   logs/
+   ```
+
+2. **储藏修改**：
+
+   ```bash
+   git stash        # 临时保存工作区
+   git stash pop    # 恢复最近一次储藏
+   ```
+
+3. **标签管理**：
+
+   ```bash
+   git tag v1.0          # 创建轻量标签
+   git tag -a v1.1 -m "版本说明"  # 创建带注释标签
+   git push origin --tags  # 推送所有标签到远程
+   ```
+
+---
+
+### 八、推荐工作流程
+
+1. **基础工作流**：
+
+   ```
+   修改文件 → git add → git commit → git push
+   ```
+
+2. **功能分支工作流**：
+
+   ```
+   git checkout -b feature → 开发 → 测试 → 
+   git push origin feature → 创建PR/MR → 合并到主分支
+   ```
+
+---
+
+### 九、常见问题处理
+
+1. **提交了错误信息**：
+
+   ```bash
+   git commit --amend  # 修改最后一次提交信息
+   ```
+
+2. **误删分支恢复**：
+
+   ```bash
+   git checkout -b new_branch commit_id  # 根据提交ID恢复
+   ```
+
+3. **清除未跟踪文件**：
+
+   ```bash
+   git clean -fd  # 删除所有未跟踪文件和目录
+   ```
+
+---
+
+### 十、图形化工具推荐
+
+1. **命令行增强**：
+   - `tig`：文本模式仓库查看器
+   - `lazygit`：终端UI工具
+
+2. **GUI工具**：
+   - GitHub Desktop
+   - Sourcetree
+   - GitKraken
+
+---
+
+### 十一、遇到的困难
+
+1. 提交代码权限不足：
+
+- 使用ssh生成密钥
+- 将密钥复制粘贴到账户中完成
+
